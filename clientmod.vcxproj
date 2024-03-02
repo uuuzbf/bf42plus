@@ -108,6 +108,8 @@
       <ProgramDatabaseFile>$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>kernel32.lib;user32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -136,6 +138,8 @@
       <ProgramDatabaseFile>$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>kernel32.lib;user32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
