@@ -15,16 +15,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\pch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\hooks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bfhook.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\hooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bfhook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
