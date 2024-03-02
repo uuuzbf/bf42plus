@@ -325,7 +325,7 @@ void* hook_function(uintptr_t addr, size_t numbytes, void* hook)
 // <content of original address>
 // jmp <address after addr+addr_length>
 // vararg: int offset, void* value, patch new code at offset to value, -1 offset terminates patch list
-void* move_code_and_add_bytes(uintptr_t addr, size_t addr_length, uint8_t* bytes, size_t bytes_length, int copy_orig, ...)
+void* move_code_and_add_bytes(uintptr_t addr, size_t addr_length, const uint8_t* bytes, size_t bytes_length, int copy_orig, ...)
 {
     // get a buffer
     size_t buffer_size = addr_length + bytes_length + 5;

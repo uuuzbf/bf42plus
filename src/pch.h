@@ -13,13 +13,11 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files
 #include <windows.h>
+#include <initializer_list>
 #include <cstdio>
 #include <cstdint>
 
-extern "C" {
 #include "hooks.h"
-}
-
 #include "bfhook.h"
 
 #endif //PCH_H

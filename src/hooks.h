@@ -1,16 +1,22 @@
 #pragma once
+
+#ifdef __cplusplus
+#include <initializer_list>
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 // gcc specific hook stuff for linux server
 #ifndef WIN32
 #define __stdcall __attribute__((stdcall))
-                
+
 typedef struct {
     const char* name;
-    void*   funcaddr;
+    void* funcaddr;
     int     hooksize;
-    void*   hookfn;
-    void**  originalfn;
+    void* hookfn;
+    void** originalfn;
 } function_hook_t;
 
 // register a new function hook
@@ -33,13 +39,13 @@ typedef struct {
 
 
 #define ADD_FUNC_HOOK(fnaddr, size, hname) \
-    static function_hook_t  bfhook_fn_hooks_ ## hname  __attribute((used, section("bfhook_fn_hooks"))) = { \
-        .name = #hname,                                         \
-        .funcaddr = (void*)(fnaddr),                            \
-        .hooksize = (size),                                     \
-        .hookfn = hname ## _hook,                               \
-        .originalfn = (void**)&hname                            \
-    }
+static function_hook_t  bfhook_fn_hooks_ ## hname  __attribute((used, section("bfhook_fn_hooks"))) = { \
+    .name = #hname,                                         \
+    .funcaddr = (void*)(fnaddr),                            \
+    .hooksize = (size),                                     \
+    .hookfn = hname ## _hook,                               \
+    .originalfn = (void**)&hname                            \
+}
 #endif
 
 enum {
@@ -59,6 +65,18 @@ void patch_bytes(uintptr_t addr, uint8_t* bytes, size_t length);
 void* modify_call(uintptr_t addr, void* newaddr);
 void inject_jmp(uintptr_t addr, size_t length, void* target, int need_unprotect);
 void* hook_function(uintptr_t addr, size_t numbytes, void* hook);
-void* move_code_and_add_bytes(uintptr_t addr, size_t addr_length, uint8_t* bytes, size_t bytes_length, int copy_orig, ...);
-void trace_function(uintptr_t funcaddr, size_t injectbytes, void (__stdcall*tracer)(const char* name, uintptr_t* arg), const char* name);
-void trace_function_fastcall(uintptr_t funcaddr, size_t injectbytes, void (__stdcall*tracer)(const char* name, uintptr_t* arg), const char* name);
+void* move_code_and_add_bytes(uintptr_t addr, size_t addr_length, const uint8_t* bytes, size_t bytes_length, int copy_orig, ...);
+void trace_function(uintptr_t funcaddr, size_t injectbytes, void(__stdcall* tracer)(const char* name, uintptr_t* arg), const char* name);
+void trace_function_fastcall(uintptr_t funcaddr, size_t injectbytes, void(__stdcall* tracer)(const char* name, uintptr_t* arg), const char* name);
+
+
+#ifdef __cplusplus
+}
+
+template <typename... Args>
+inline void* moveCodeAndAddBytes(uintptr_t addr, size_t addr_length, std::initializer_list<uint8_t> bytes, int copy_orig, Args... args)
+{
+    return move_code_and_add_bytes(addr, addr_length, bytes.begin(), bytes.size(), copy_orig, args...);
+}
+
+#endif
