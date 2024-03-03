@@ -43,15 +43,30 @@ void patch_screen_resolution_fixes()
     DEVMODEA mode = { 0 };
     EnumDisplaySettingsA(0, ENUM_CURRENT_SETTINGS, &mode);
     unsigned int screenres_width = mode.dmPelsWidth, screenres_height = mode.dmPelsHeight;
-    patch_bytes(0x006B0281, (uint8_t*)&screenres_width, 4); // def res x = screenres_width
-    patch_bytes(0x006B0288, (uint8_t*)&screenres_height, 4); // def res y = screenres_height
+    patchBytes(0x006B0281, screenres_width); // def res x = screenres_width
+    patchBytes(0x006B0288, screenres_height); // def res y = screenres_height
 
-    patch_bytes(0x004631EF, (uint8_t*)&screenres_width, 4); // def window size x = screenres_width
-    patch_bytes(0x004631F7, (uint8_t*)&screenres_height, 4); // def window size y = screenres_height
+    patchBytes(0x004631EF, screenres_width); // def window size x = screenres_width
+    patchBytes(0x004631F7, screenres_height); // def window size y = screenres_height
 
     // menu resolution patch from https://team-simple.org/forum/viewtopic.php?id=7928 / https://bfmods.com/viewtopic.php?f=9&t=47957
     // this is already present in henk's latest patched exe but not everybody uses that
     patchBytes(0x0045DD69, { 0xE8, 0x02, 0x34, 0x25, 0x00 });
+}
+
+void patch_quicker_server_pinging_on_restart()
+{
+    // When a map ends, the client displays the "LOADING, PLEASE WAIT" message. During this,
+    // the client waits for the server to come online before restarting itself. There is a
+    // system built into the client that pings the server to accomplish this. By default
+    // there is a delay of 16 seconds before this pinging starts, however servers can
+    // restart much faster than that.
+
+    // make server pinging quicker when restarting on map change
+    static float delayBeforePingingStarts = 1.0f; // default 16 sec
+    static float pingInterval = 2.0f; // default 3 sec
+    patchBytes(0x004B7000, delayBeforePingingStarts);
+    patchBytes(0x004B6F6C, pingInterval);
 }
 
 void bfhook_init()
@@ -61,6 +76,7 @@ void bfhook_init()
     patch_Particle_handleUpdate_crash();
     patch_scoreboard_column_widths();
     patch_screen_resolution_fixes();
+    patch_quicker_server_pinging_on_restart();
 
     dynbuffer_make_nonwritable();
 }

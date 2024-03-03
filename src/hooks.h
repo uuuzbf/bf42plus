@@ -84,6 +84,12 @@ inline void patchBytes(uintptr_t addr, std::initializer_list<uint8_t> bytes)
     return patch_bytes(addr, bytes.begin(), bytes.size());
 }
 
+template <class T>
+inline void patchBytes(uintptr_t addr, const T& value)
+{
+    return patch_bytes(addr, (uint8_t*)&value, sizeof(value));
+}
+
 // helper macros for casting lambda functions to various function pointers
 // only stateless lambdas are supported
 // example: auto ptr = LAMBDA_STDCALL(int, (), { return 4; })
