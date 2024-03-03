@@ -43,4 +43,6 @@ void bfhook_init()
 
     patch_Particle_handleUpdate_crash();
     patch_scoreboard_column_widths();
+
+    dynbuffer_make_nonwritable();
 }
