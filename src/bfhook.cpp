@@ -18,7 +18,7 @@ void patch_Particle_handleUpdate_crash()
         mov eax, 00538BDCh  ; jump to end of function, increments time to live and destroys if needed
         jmp eax
         resume :
-    MOVE_CODE_AND_ADD_CODE(mo, 0x005389C9, 5, HOOK_ADD_ORIGINAL_AFTER);
+    MOVE_CODE_AND_ADD_CODE(mo, 0x005389C9u, 5, HOOK_ADD_ORIGINAL_AFTER);
 }
 
 void patch_scoreboard_column_widths()
@@ -37,12 +37,30 @@ void patch_scoreboard_column_widths()
     patchBytes(0x006DFB3D, { 0x68, 0xAE, 0x00, 0, 0 }); // push 174  axis - unknown column (2) - pos x
 }
 
+void patch_screen_resolution_fixes()
+{
+    // this patch should prevent the extra screen resolution changes on startup that messes up other apps window sizes
+    DEVMODEA mode = { 0 };
+    EnumDisplaySettingsA(0, ENUM_CURRENT_SETTINGS, &mode);
+    unsigned int screenres_width = mode.dmPelsWidth, screenres_height = mode.dmPelsHeight;
+    patch_bytes(0x006B0281, (uint8_t*)&screenres_width, 4); // def res x = screenres_width
+    patch_bytes(0x006B0288, (uint8_t*)&screenres_height, 4); // def res y = screenres_height
+
+    patch_bytes(0x004631EF, (uint8_t*)&screenres_width, 4); // def window size x = screenres_width
+    patch_bytes(0x004631F7, (uint8_t*)&screenres_height, 4); // def window size y = screenres_height
+
+    // menu resolution patch from https://team-simple.org/forum/viewtopic.php?id=7928 / https://bfmods.com/viewtopic.php?f=9&t=47957
+    // this is already present in henk's latest patched exe but not everybody uses that
+    patchBytes(0x0045DD69, { 0xE8, 0x02, 0x34, 0x25, 0x00 });
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
 
     patch_Particle_handleUpdate_crash();
     patch_scoreboard_column_widths();
+    patch_screen_resolution_fixes();
 
     dynbuffer_make_nonwritable();
 }
