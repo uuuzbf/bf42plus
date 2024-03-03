@@ -61,7 +61,7 @@ int unprotect(void* addr, size_t size);
 void nop_bytes(uintptr_t addr, size_t count);
 void inject_ret(uintptr_t addr, uint16_t n);
 void inject_ret_value(uintptr_t addr, uint16_t n, uint32_t value);
-void patch_bytes(uintptr_t addr, uint8_t* bytes, size_t length);
+void patch_bytes(uintptr_t addr, const uint8_t* bytes, size_t length);
 void* modify_call(uintptr_t addr, void* newaddr);
 void inject_jmp(uintptr_t addr, size_t length, void* target, int need_unprotect);
 void* hook_function(uintptr_t addr, size_t numbytes, void* hook);
@@ -79,4 +79,60 @@ inline void* moveCodeAndAddBytes(uintptr_t addr, size_t addr_length, std::initia
     return move_code_and_add_bytes(addr, addr_length, bytes.begin(), bytes.size(), copy_orig, args...);
 }
 
+inline void patchBytes(uintptr_t addr, std::initializer_list<uint8_t> bytes)
+{
+    return patch_bytes(addr, bytes.begin(), bytes.size());
+}
+
+// helper macros for casting lambda functions to various function pointers
+// only stateless lambdas are supported
+// example: auto ptr = LAMBDA_STDCALL(int, (), { return 4; })
+// ptr is now an int(__stdcall*)() which can be used in __asm blocks too
+#define LAMBDA_CDECL(rettype, args, body)    static_cast<rettype (__cdecl*)args>([]args body)
+#define LAMBDA_STDCALL(rettype, args, body)    static_cast<rettype (__stdcall*) args >([] args body)
+
+#endif
+
+#if _MSC_VER && !__INTEL_COMPILER
+// special wrapper macros for MSVC for __asm blocks
+
+// for arbitrary asm blocks:
+// ASMCODE_VARS() only needs to be defined once per scope
+// after that
+// ASMCODE_START(name)
+// <assembly code lines go here>
+// ASMCODE_END(name)
+// then ASMCODE_PTR_AND_SIZE() returns the start address as uint8_t* and the size of the code, comma separated
+#define ASMCODE_VARS()  uint8_t* asm_start,* asm_end
+#define ASMCODE_START(name) \
+    goto name ## _end; \
+    name ## _start: \
+    _asm {
+
+#define ASMCODE_END(name) \
+    } \
+    name ## _end: \
+    _asm mov [asm_start], offset name ## _start; \
+    _asm mov [asm_end], offset name ## _end
+
+#define ASMCODE_PTR_AND_SIZE()  asm_start, (asm_end - asm_start)
+
+// wrapper for move_code_and_add_bytes():
+// BEGIN_ASM_CODE(uniquekey)
+// <assembly code lines go here>
+// MOVE_CODE_AND_ADD_CODE(uniquekey, address to modify, bytes to move at address, copy mode)
+#define BEGIN_ASM_CODE(key) \
+    do { \
+        goto asmblock_ ## key ## _end; \
+        asmblock_ ## key ## _start: \
+        __asm { \
+
+#define MOVE_CODE_AND_ADD_CODE(key, addr, addr_length, copy_orig) \
+        } \
+        asmblock_ ## key ## _end: \
+        uint8_t* start,* end; \
+        __asm { mov [start], offset asmblock_ ## key ## _start } \
+        __asm { mov [end], offset asmblock_ ## key ## _end } \
+        move_code_and_add_bytes((addr), (addr_length), start, end - start, (copy_orig), -1); \
+    } while(0)
 #endif

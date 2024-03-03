@@ -205,7 +205,7 @@ void inject_ret_value(uintptr_t addr, uint16_t n, uint32_t value)
     inject_ret(addr, n);
 }
 
-void patch_bytes(uintptr_t addr, uint8_t* bytes, size_t length)
+void patch_bytes(uintptr_t addr, const uint8_t* bytes, size_t length)
 {
     if(!unprotect((void*)addr, length))
     {
