@@ -121,6 +121,7 @@
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/PDBALTPATH:$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>del "$(BF1942_DIR)\d3d8_old.dll"
@@ -166,6 +167,7 @@ git describe --tags --long &gt;&gt; src\gitversion.h</Command>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalOptions>/PDBALTPATH:$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>del "$(BF1942_DIR)\d3d8_old.dll"
