@@ -153,7 +153,7 @@ std::string WideStringToASCII(std::wstring s)
     result.resize(s.size());
     size_t i = 0;
     for (auto c = s.cbegin(); c != s.cend(); c++) {
-        if (*c < 128) result[i++] = *c;
+        if (*c < 128) result[i++] = (char)*c;
         else result[i++] = '?';
     }
     return result;
@@ -168,17 +168,17 @@ bool HexStringToData(const std::wstring& str, std::vector<unsigned char>& data)
     char high = -1;
     size_t idx = 0;
     for (auto it = str.cbegin(); it != str.cend(); it++) {
-        char value;
+        int value;
         if (*it >= '0' && *it <= '9') value = *it - '0';
         else if (*it >= 'A' && *it <= 'F') value = *it - 'A' + 10;
         else if (*it >= 'a' && *it <= 'f') value = *it - 'a' + 10;
         else return false;
         if (high != -1) {
-            data[idx++] = (high << 4) | value;
+            data[idx++] = (high << 4) | (char)value;
             high = -1;
         }
         else {
-            high = value;
+            high = (char)value;
         }
     }
     return true;

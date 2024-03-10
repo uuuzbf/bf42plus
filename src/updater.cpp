@@ -197,6 +197,7 @@ static bool apply_update()
 
 static DWORD __stdcall updater_thread(void* ptr)
 {
+    (void)ptr;
     debuglog("updater thread started\n");
     UpdateInfo info;
     if (check_for_update(info)) {

@@ -47,5 +47,5 @@ bool HexStringToData(const std::wstring& str, std::vector<unsigned char>& data);
 #ifdef _DEBUG
 void debuglog(const char* fmt, ...);
 #else
-#define debuglog (void)
+#define debuglog(...)
 #endif
