@@ -3,6 +3,8 @@
 Debug
 Release
 *.pdb
+libs/*
+src/gitversion.h
 
 # Prerequisites
 *.d

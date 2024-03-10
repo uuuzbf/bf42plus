@@ -29,11 +29,15 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\updater.cpp" />
+    <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\bfhook.h" />
     <ClInclude Include="src\hooks.h" />
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\updater.h" />
+    <ClInclude Include="src\util.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -105,19 +109,26 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\libs\libsodium\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>5105;4201;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ProgramDatabaseFile>$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>kernel32.lib;user32.lib</AdditionalDependencies>
+      <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\Win32\release\v143\static\libsodium.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
+    <PreBuildEvent>
+      <Command>&lt;nul set /p ="#define GIT_VERSION " &gt; src\gitversion.h
+git describe --tags --long &gt;&gt; src\gitversion.h</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generating gitversion.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -133,7 +144,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\libs\libsodium\include;$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>5105;4201;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -142,12 +153,19 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <ProgramDatabaseFile>$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>kernel32.lib;user32.lib</AdditionalDependencies>
+      <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\Win32\release\v143\static\libsodium.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
+    <PreBuildEvent>
+      <Command>&lt;nul set /p ="#define GIT_VERSION " &gt; src\gitversion.h
+git describe --tags --long &gt;&gt; src\gitversion.h</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Generating gitversion.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

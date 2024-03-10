@@ -4,12 +4,14 @@
 
 #include "pch.h"
 
-HMODULE this_module;
+HMODULE g_this_module;
 typedef int __stdcall WinMain_t(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
 WinMain_t* WinMain_orig = 0;
 int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     bfhook_init();
+
+    updater_client_startup();
 
     return WinMain_orig(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
 }
@@ -40,10 +42,11 @@ void* WINAPI Direct3DCreate8(UINT SDKVersion)
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-    (void)hModule; (void)lpReserved;
+    (void)lpReserved;
     switch (ul_reason_for_call)
     {
         case DLL_PROCESS_ATTACH:
+            g_this_module = hModule;
             WinMain_orig = (WinMain_t*)modify_call(0x00804DA6, (void*)WinMain_hook);
             break;
         case DLL_THREAD_ATTACH:
