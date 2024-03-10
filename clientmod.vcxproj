@@ -122,6 +122,14 @@
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
+    <PostBuildEvent>
+      <Command>del "$(BF1942_DIR)\d3d8_old.dll"
+rename "$(BF1942_DIR)\d3d8.dll" "$(BF1942_DIR)\d3d8_old.dll"
+copy /y "$(TargetPath)" "$(BF1942_DIR)\d3d8.dll"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to BF1942 dir</Message>
+    </PostBuildEvent>
     <PreBuildEvent>
       <Command>&lt;nul set /p ="#define GIT_VERSION " &gt; src\gitversion.h
 git describe --tags --long &gt;&gt; src\gitversion.h</Command>
@@ -159,6 +167,14 @@ git describe --tags --long &gt;&gt; src\gitversion.h</Command>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
+    <PostBuildEvent>
+      <Command>del "$(BF1942_DIR)\d3d8_old.dll"
+rename "$(BF1942_DIR)\d3d8.dll" "$(BF1942_DIR)\d3d8_old.dll"
+copy /y "$(TargetPath)" "$(BF1942_DIR)\d3d8.dll"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying dll to BF1942 dir</Message>
+    </PostBuildEvent>
     <PreBuildEvent>
       <Command>&lt;nul set /p ="#define GIT_VERSION " &gt; src\gitversion.h
 git describe --tags --long &gt;&gt; src\gitversion.h</Command>
