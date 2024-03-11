@@ -1,2 +1,3 @@
 EXPORTS
 	Direct3DCreate8
+	_build_version_dummy DATA

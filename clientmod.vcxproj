@@ -39,6 +39,9 @@
     <ClInclude Include="src\updater.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="res\d3d8.def" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

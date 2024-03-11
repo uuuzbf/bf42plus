@@ -53,6 +53,8 @@ const wchar_t* get_build_version()
     return L"" M_TO_STRING(GIT_VERSION);
 }
 
+extern const char _build_version_dummy[] = "_build_version_=" M_TO_STRING(GIT_VERSION);
+
 static bool check_for_update(UpdateInfo& info)
 {
     debuglog("check for update\n");
