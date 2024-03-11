@@ -62,7 +62,8 @@ static bool check_for_update(UpdateInfo& info)
     }
 
     std::wstring latest_version_path = UPDATE_CHECK_PATH;
-    replaceAll(latest_version_path, L"{CHANNEL}", get_update_release_channel());
+    info.channel = get_update_release_channel();
+    replaceAll(latest_version_path, L"{CHANNEL}", info.channel);
     if (!http.GET(latest_version_path)) {
         return false;
     }
