@@ -18,12 +18,14 @@
 #include <windows.h>
 #include <initializer_list>
 #include <string>
+#include <format>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <locale>
 #include <cstdio>
 #include <cstdint>
+#include <ctime>
 
 #define SODIUM_STATIC
 #include <sodium.h>

@@ -5,6 +5,8 @@ static const unsigned short UPDATE_SERVER_PORT = 0; // default
 static const bool UPDATE_SERVER_HTTPS = true;
 static const wchar_t* UPDATE_CHECK_PATH = L"/update/latest_{CHANNEL}.txt";
 
+std::string updater_state = "uninitialized";
+
 static const unsigned char update_publickey_non_release[crypto_sign_PUBLICKEYBYTES] = {
     0xBA, 0xB4, 0x90, 0x7C, 0x70, 0x8C, 0xFF, 0xCF, 0x2C, 0xC1, 0x36, 0x14,
     0x4D, 0xDC, 0x78, 0x65, 0xF0, 0xF4, 0xFD, 0x09, 0x1E, 0x16, 0x09, 0xD9,
@@ -60,6 +62,7 @@ static bool check_for_update(UpdateInfo& info)
     debuglog("check for update\n");
     HTTPClient http;
     if (!http.Init(UPDATE_SERVER, UPDATE_SERVER_PORT, UPDATE_SERVER_HTTPS)) {
+        updater_state = "check: init failed";
         return false;
     }
 
@@ -67,17 +70,20 @@ static bool check_for_update(UpdateInfo& info)
     info.channel = get_update_release_channel();
     replaceAll(latest_version_path, L"{CHANNEL}", info.channel);
     if (!http.GET(latest_version_path)) {
+        updater_state = "check: request failed";
         return false;
     }
 
     int status = http.status();
     if (status != 200) {
+        updater_state = std::format("check: server returned {}", status);
         debuglog("server returned %d\n", status);
         return false;
     }
 
     std::wstring response;
     if (!http.text(response)) {
+        updater_state = "check: reading response failed";
         return false;
     }
 
@@ -90,10 +96,12 @@ static bool check_for_update(UpdateInfo& info)
     debuglog("newest version: '%ls'\nsignature: '%ls'\nupdatefile: '%ls'\n", version.c_str(), hexsignature.c_str(), info.updatefile.c_str());
 
     if (hexsignature.size() != crypto_sign_BYTES*2 || info.updatefile.size() == 0) {
+        updater_state = "check: malformed response";
         return false;
     }
 
     if (!HexStringToData(hexsignature, info.signature)) {
+        updater_state = "check: invalid update signature";
         debuglog("invalid update signature\n");
         return false;
     }
@@ -101,7 +109,11 @@ static bool check_for_update(UpdateInfo& info)
     // update if:
     //  updating to a different release channel OR
     //  build version differs
-    return wcscmp(get_update_release_channel(), get_build_release_channel()) != 0 || version != get_build_version();
+    bool need_update = wcscmp(get_update_release_channel(), get_build_release_channel()) != 0 || version != get_build_version();
+    if (!need_update) {
+        updater_state = "up-to-date";
+    }
+    return need_update;
 }
 
 // download updated file, verify it with pubkey and save it somewhere
@@ -110,6 +122,7 @@ static bool download_update(UpdateInfo& info)
     wchar_t modulepath[MAX_PATH];
     DWORD result = GetModuleFileName(g_this_module, modulepath, MAX_PATH);
     if (result > (MAX_PATH - 10)) {
+        updater_state = "download: module path too long";
         debuglog("module path is too long!\n");
         return false;
     }
@@ -119,31 +132,37 @@ static bool download_update(UpdateInfo& info)
     std::ofstream updatefs(modulepath, std::ios::out | std::ios::trunc | std::ios::binary);
 
     if (updatefs.fail()) {
+        updater_state = "download: failed to create new file";
         debuglog("failed to create new file when updating: %ls\n", modulepath);
         return false;
     }
 
     HTTPClient http;
     if (!http.Init(UPDATE_SERVER, UPDATE_SERVER_PORT, UPDATE_SERVER_HTTPS)) {
+        updater_state = "download: init failed";
         return false;
     }
 
     if (!http.GET(info.updatefile)) {
+        updater_state = "download: request failed";
         return false;
     }
 
     int status = http.status();
     if (status != 200) {
+        updater_state = std::format("download: server returned {}", status);
         debuglog("server returned %d\n", status);
         return false;
     }
 
     std::vector<char> filedata;
     if (!http.data(filedata)) {
+        updater_state = "download: reading data failed";
         return false;
     }
 
     if (sodium_init() < 0) {
+        updater_state = "download: sodium_init failed";
         debuglog("sodium_init failed\n");
         return false;
     }
@@ -151,12 +170,14 @@ static bool download_update(UpdateInfo& info)
     const unsigned char* pubkey = info.channel == L"release" ? update_publickey_release : update_publickey_non_release;
 
     if (crypto_sign_verify_detached(info.signature.data(), reinterpret_cast<unsigned char*>(filedata.data()), filedata.size(), pubkey) < 0) {
+        updater_state = "download: signature check failed";
         debuglog("crypto_sign_verify_detached failed\n");
         return false;
     }
 
     updatefs.write(filedata.data(), filedata.size());
     if (updatefs.bad()) {
+        updater_state = "download: writing file data failed";
         return false;
     }
 
@@ -173,6 +194,7 @@ static bool apply_update()
     modulepath.resize(MAX_PATH);
     DWORD result = GetModuleFileName(g_this_module, modulepath.data(), MAX_PATH);
     if (result > (MAX_PATH - 10)) {
+        updater_state = "download: module path too long";
         debuglog("module path is too long!\n");
         return false;
     }
@@ -186,11 +208,13 @@ static bool apply_update()
     }
 
     if (!MoveFile(modulepath.c_str(), old_path.c_str())) {
+        updater_state = "download: failed to move old dll";
         debuglog("failed to move dll from %ls to %ls\n", modulepath.c_str(), old_path.c_str());
         return false;
     }
 
     if (!MoveFile(updated_path.c_str(), modulepath.c_str())) {
+        updater_state = "download: failed to move new dll";
         debuglog("failed to move dll from %ls to %ls\n", updated_path.c_str(), modulepath.c_str());
         return false;
     }
@@ -206,8 +230,16 @@ static DWORD __stdcall updater_thread(void* ptr)
     if (check_for_update(info)) {
         if (download_update(info)) {
             apply_update();
+            updater_state = "update applied";
         }
     }
+
+    // write status string to file, this is a temporary solution until some user interface will be available
+    std::ofstream status("updatestatus.txt", std::ios::out | std::ios::trunc);
+    std::time_t now = std::time(0);
+    char now_str[64];
+    std::strftime(now_str, 64, "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    status << now_str << " " << updater_state;
     return 0;
 }
 
