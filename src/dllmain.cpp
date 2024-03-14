@@ -11,7 +11,9 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 {
     bfhook_init();
 
+#ifndef _DEBUG
     updater_client_startup();
+#endif
 
     return WinMain_orig(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
 }
