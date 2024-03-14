@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "gitversion.h"
+
 static const wchar_t* UPDATE_SERVER = L"update.bf1942.hu";
 static const unsigned short UPDATE_SERVER_PORT = 0; // default
 static const bool UPDATE_SERVER_HTTPS = true;
