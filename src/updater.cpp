@@ -59,6 +59,20 @@ const wchar_t* get_build_version()
 
 extern const char _build_version_dummy[] = "_build_version_=" M_TO_STRING(GIT_VERSION);
 
+
+int compare_version(std::wstring older, std::wstring newer)
+{
+    auto sOld = std::wistringstream(older), sNew = std::wistringstream(newer);
+    for (int i = 0; i < 4; i++) {
+        int oldN = 0, newN = 0;
+        sOld >> oldN; sNew >> newN; // read a number from each version, default to 0
+        if (oldN < newN) return 1; // newer is newer than older
+        else if (oldN > newN) return -1; // newer is older
+        sOld.get(); sNew.get(); // skip a delimiter character
+    }
+    return 0; // versions are equal
+}
+
 static bool check_for_update(UpdateInfo& info)
 {
     debuglog("check for update\n");
@@ -111,11 +125,19 @@ static bool check_for_update(UpdateInfo& info)
     // update if:
     //  updating to a different release channel OR
     //  build version differs
-    bool need_update = wcscmp(get_update_release_channel(), get_build_release_channel()) != 0 || version != get_build_version();
-    if (!need_update) {
+    if (wcscmp(get_update_release_channel(), get_build_release_channel()) != 0) {
+        return true;
+    }
+
+    int compareResult = compare_version(get_build_version(), version);
+    if (compareResult == 1) return true; // version is newer, update
+    if (compareResult == 0) {
         updater_state = "up-to-date";
     }
-    return need_update;
+    else { // -1
+        updater_state = "newer-than-update-server";
+    }
+    return false;
 }
 
 // download updated file, verify it with pubkey and save it somewhere
