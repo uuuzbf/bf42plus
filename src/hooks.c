@@ -45,7 +45,7 @@ void init_hooksystem(FILE* out)
     
     section_foreach_entry(bfhook_fn_hooks, function_hook_t, fhook)
     {
-        void* origcall = hook_function(fhook->funcaddr, fhook->hooksize, fhook->hookfn);
+        void* origcall = hook_function((uintptr_t)fhook->funcaddr, fhook->hooksize, fhook->hookfn);
         if(origcall)
         {
             *fhook->originalfn = origcall;

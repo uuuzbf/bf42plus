@@ -96,10 +96,11 @@ inline void patchBytes(uintptr_t addr, const T& value)
 // ptr is now an int(__stdcall*)() which can be used in __asm blocks too
 #define LAMBDA_CDECL(rettype, args, body)    static_cast<rettype (__cdecl*)args>([]args body)
 #define LAMBDA_STDCALL(rettype, args, body)    static_cast<rettype (__stdcall*) args >([] args body)
+#define LAMBDA_FASTCALL(rettype, args, body)    static_cast<rettype (__fastcall*) args >([] args body)
 
 #endif
 
-#if _MSC_VER && !__INTEL_COMPILER
+#ifdef _MSC_VER
 // special wrapper macros for MSVC for __asm blocks
 
 // for arbitrary asm blocks:
