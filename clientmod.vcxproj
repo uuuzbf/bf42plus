@@ -20,6 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bfhook.cpp" />
+    <ClCompile Include="src\bf\stl.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\hooks.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -34,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\bfhook.h" />
+    <ClInclude Include="src\bf\stl.h" />
     <ClInclude Include="src\hooks.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\updater.h" />
@@ -124,7 +129,6 @@
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
-      <AdditionalOptions>/PDBALTPATH:$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>del "$(BF1942_DIR)\d3d8_old.dll"
