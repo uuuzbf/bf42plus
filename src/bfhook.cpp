@@ -88,6 +88,12 @@ void patch_show_version_in_menu()
     *(uint8_t*)0x0045F0C9 = 0xE8; // this changes the jmp above to a call (TODO: inject_call)
 }
 
+void patch_empty_maplist()
+{
+    // fix maplist sometimes empty, the MapEvent has a bool that gets stack garbage, and the client only accepts the packet if its true
+    nop_bytes(0x00494DFA, 6);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -98,6 +104,7 @@ void bfhook_init()
     patch_quicker_server_pinging_on_restart();
     patch_master_address();
     patch_show_version_in_menu();
+    patch_empty_maplist();
 
     dynbuffer_make_nonwritable();
 }
