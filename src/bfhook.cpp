@@ -77,6 +77,16 @@ void patch_master_address()
     strcpy((char*)0x00957DF8, masteraddr); // char[64]
 }
 
+void patch_show_version_in_menu()
+{
+    auto get_version = LAMBDA_FASTCALL(bfs::string*, (bfs::string & s), {
+        auto ss = std::string("BF1942 v1.61; mod ") + WideStringToASCII(get_build_version());
+        s = ss;
+        return &s;
+    });
+    inject_jmp(0x0045F0C9, 5, reinterpret_cast<void*>(get_version), 1);
+    *(uint8_t*)0x0045F0C9 = 0xE8; // this changes the jmp above to a call (TODO: inject_call)
+}
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -86,6 +96,7 @@ void bfhook_init()
     patch_screen_resolution_fixes();
     patch_quicker_server_pinging_on_restart();
     patch_master_address();
+    patch_show_version_in_menu();
 
     dynbuffer_make_nonwritable();
 }
