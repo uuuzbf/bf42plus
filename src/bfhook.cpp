@@ -69,6 +69,14 @@ void patch_quicker_server_pinging_on_restart()
     patchBytes(0x004B6F6C, pingInterval);
 }
 
+void patch_master_address()
+{
+    // make sure the client uses the latest master address
+    const char* masteraddr = "master.bf1942.org";
+    strcpy((char*)0x00957C30, masteraddr); // char[64]
+    strcpy((char*)0x00957DF8, masteraddr); // char[64]
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -77,6 +85,7 @@ void bfhook_init()
     patch_scoreboard_column_widths();
     patch_screen_resolution_fixes();
     patch_quicker_server_pinging_on_restart();
+    patch_master_address();
 
     dynbuffer_make_nonwritable();
 }
