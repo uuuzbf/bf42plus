@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\bf">
+      <UniqueIdentifier>{a7bd5dab-36ec-4a00-91b4-30be673ffc3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\bf">
+      <UniqueIdentifier>{0c688a9b-6019-482d-9dec-94efc22934b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -33,6 +39,9 @@
     <ClCompile Include="src\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\bf\stl.cpp">
+      <Filter>Source Files\bf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hooks.h">
@@ -50,5 +59,13 @@
     <ClInclude Include="src\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\bf\stl.h">
+      <Filter>Header Files\bf</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\d3d8.def">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

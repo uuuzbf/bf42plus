@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clientmod", "clientmod.vcxproj", "{8EC8D478-85AA-45BC-819F-903336A89F70}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bf42plus", "bf42plus.vcxproj", "{8EC8D478-85AA-45BC-819F-903336A89F70}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
