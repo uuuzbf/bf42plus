@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#pragma warning(disable: 4740)
+
 void patch_Particle_handleUpdate_crash()
 {
     // fix crash when game is minimized
