@@ -2,9 +2,8 @@
 *vcxproj.user
 Debug
 Release
-*.pdb
-libs/*
 src/gitversion.h
+Release*.7z
 
 # Prerequisites
 *.d
@@ -32,7 +31,6 @@ src/gitversion.h
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe

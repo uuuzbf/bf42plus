@@ -125,7 +125,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\Win32\release\v143\static\libsodium.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
@@ -170,7 +170,7 @@ git describe --tags --long &gt;&gt; src\gitversion.h</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\Win32\release\v143\static\libsodium.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
