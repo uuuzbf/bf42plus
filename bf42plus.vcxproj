@@ -132,9 +132,7 @@
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PostBuildEvent>
-      <Command>del "$(BF1942_DIR)\d3d8_old.dll"
-rename "$(BF1942_DIR)\d3d8.dll" "$(BF1942_DIR)\d3d8_old.dll"
-copy /y "$(TargetPath)" "$(BF1942_DIR)\d3d8.dll"</Command>
+      <Command>tools\copyoutput.bat "$(TargetPath)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying dll to BF1942 dir</Message>
@@ -178,9 +176,7 @@ git describe --tags --long &gt;&gt; src\gitversion.h</Command>
       <AdditionalOptions>/PDBALTPATH:$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>del "$(BF1942_DIR)\d3d8_old.dll"
-rename "$(BF1942_DIR)\d3d8.dll" "$(BF1942_DIR)\d3d8_old.dll"
-copy /y "$(TargetPath)" "$(BF1942_DIR)\d3d8.dll"</Command>
+      <Command>tools\copyoutput.bat "$(TargetPath)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying dll to BF1942 dir</Message>
