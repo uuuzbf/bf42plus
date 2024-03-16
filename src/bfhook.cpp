@@ -89,6 +89,31 @@ void patch_show_version_in_menu()
     *(uint8_t*)0x0045F0C9 = 0xE8; // this changes the jmp above to a call (TODO: inject_call)
 }
 
+void patch_use_mod_in_serverlist_on_connect()
+{
+    // faster restart when switching mod on connecting
+    // use the gameId from the server list/server query to determine if the client needs a restart
+    // this way the client doesn't have to connect to the server, just to get the server's mod name and restart
+    // this was implemented in vanilla bf1942, but the code is completely broken
+    // InternetServerList only has 14 columns (0-13), the server list code tries to put the mod name into column 18
+    // and on connecting it is getting pulled from column 15, both always fails because there is no column 18 or 15
+    // to fix it: add two more zero width (data) columns: 14,15
+    // and modify the code that gets the mod from the listbox to get it from column 15
+    // ecx contains meme_ListBoxData*
+    BEGIN_ASM_CODE(a)
+        push ebx            // save ebx
+        mov ebx, 0x007D42A0 // meme_ListBoxData__addColumnNoWidth
+        call ebx            // meme_ListBoxData__addColumnNoWidth()
+        mov ecx,[esi+0Ch]
+        call ebx            // meme_ListBoxData__addColumnNoWidth()
+        mov ecx,[esi+0Ch]   // meme_ListBoxData__addColumnNoWidth()
+        call ebx
+        pop ebx
+    MOVE_CODE_AND_ADD_CODE(a, 0x0069F4AEu, 5, HOOK_DISCARD_ORIGINAL);
+    // fix code that gets the gameId from the listbox to get it from column 15 instead of 18
+    patchBytes(0x0069F971, { 0x6a, 0x0f }); // push 18 -> push 15
+}
+
 void patch_empty_maplist()
 {
     // fix maplist sometimes empty, the MapEvent has a bool that gets stack garbage, and the client only accepts the packet if its true
@@ -106,6 +131,7 @@ void bfhook_init()
     patch_master_address();
     patch_show_version_in_menu();
     patch_empty_maplist();
+    patch_use_mod_in_serverlist_on_connect();
 
     dynbuffer_make_nonwritable();
 }
