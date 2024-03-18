@@ -40,15 +40,27 @@ void patch_scoreboard_column_widths()
 
 void patch_screen_resolution_fixes()
 {
-    // this patch should prevent the extra screen resolution changes on startup that messes up other apps window sizes
-    DEVMODEA mode = { 0 };
-    EnumDisplaySettingsA(0, ENUM_CURRENT_SETTINGS, &mode);
-    unsigned int screenres_width = mode.dmPelsWidth, screenres_height = mode.dmPelsHeight;
-    patchBytes(0x006B0281, screenres_width); // def res x = screenres_width
-    patchBytes(0x006B0288, screenres_height); // def res y = screenres_height
+    // A different way to fix this: UserInterface__parseDisplaySettings(45f8f0) has the wrong sscanf parameter
+    // It searches for game.setDisplayMode command which doesn't actually exist, it is called game.setGameDisplayMode
+    // Change the referenced string to use the correct command
+    // Found by tuia
+    unprotect((void*)0x0045FBD0, 4);
+    *(const char**)0x0045FBD0 = "game.setGameDisplayMode %d %d %d";
 
-    patchBytes(0x004631EF, screenres_width); // def window size x = screenres_width
-    patchBytes(0x004631F7, screenres_height); // def window size y = screenres_height
+    // Additional patch to avoid changing resolution back to 800x600 when the game first loads the config.
+    // The loaded resolution info needs to be copied to the active resolution before calling changeResolution()
+    BEGIN_ASM_CODE(mo)
+        mov eax,[ecx+0x40]
+        mov [ecx+0x30],eax
+        mov eax, [ecx + 0x44]
+        mov[ecx + 0x34], eax
+        mov eax, [ecx + 0x48]
+        mov[ecx + 0x38], eax
+        mov eax, [ecx + 0x4C]
+        mov[ecx + 0x3C], eax
+        mov eax,0x006B0DB0 // original call, __changeResolution
+        call eax
+    MOVE_CODE_AND_ADD_CODE(mo, 0x006B1083u, 5, HOOK_DISCARD_ORIGINAL);
 
     // menu resolution patch from https://team-simple.org/forum/viewtopic.php?id=7928 / https://bfmods.com/viewtopic.php?f=9&t=47957
     // this is already present in henk's latest patched exe but not everybody uses that
