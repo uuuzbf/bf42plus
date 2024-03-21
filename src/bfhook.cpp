@@ -132,6 +132,15 @@ void patch_empty_maplist()
     nop_bytes(0x00494DFA, 6);
 }
 
+void patch_serverlist_wrong_version_grey_servers()
+{
+    // patch BfMultiplayerLobby::getServerColor to ignore the server version
+    // this fixes servers with wrong version showing up as grey in the serverlist
+    // this greying is not needed because there are no multiple versions anymore
+    // skip the compare to the version string and the check after it
+    inject_jmp(0x00401784, 4, (void*)0x004017CE, 1);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -144,6 +153,7 @@ void bfhook_init()
     patch_show_version_in_menu();
     patch_empty_maplist();
     patch_use_mod_in_serverlist_on_connect();
+    patch_serverlist_wrong_version_grey_servers();
 
     dynbuffer_make_nonwritable();
 }
