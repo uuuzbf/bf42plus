@@ -64,7 +64,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\d3d8.def">
+    <None Include="res\bf42plus.def">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

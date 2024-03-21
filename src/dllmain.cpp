@@ -19,27 +19,27 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 }
 
 extern "C" __declspec(dllexport)
-void* WINAPI Direct3DCreate8(UINT SDKVersion)
+HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGuidDevice, void** ppDS8, void* pUnkOuter)
 {
-    char path[MAX_PATH] = ".\\d3d8_next.dll";
-    HMODULE d3d8dll = LoadLibraryA(path);
-    if (d3d8dll == 0) {
+    char path[MAX_PATH] = ".\\dsound_next.dll";
+    HMODULE dsounddll = LoadLibraryA(path);
+    if (dsounddll == 0) {
         GetSystemDirectoryA(path, MAX_PATH);
-        strcat_s(path, sizeof(path), "\\d3d8.dll");
-        d3d8dll = LoadLibraryA(path);
+        strcat_s(path, sizeof(path), "\\dsound.dll");
+        dsounddll = LoadLibraryA(path);
     }
 
-    if (d3d8dll != 0) {
+    if (dsounddll != 0) {
     }
     else {
-        MessageBoxA(0, path, "failed to load d3d8.dll", 0);
+        MessageBoxA(0, path, "failed to load dsound.dll", 0);
         return 0;
     }
 
-    typedef void* WINAPI Direct3DCreate8_t(UINT SDKVersion);
-    Direct3DCreate8_t* Direct3DCreate8_orig = (Direct3DCreate8_t*)(void*)GetProcAddress(d3d8dll, "Direct3DCreate8");
+    typedef HRESULT WINAPI Direct3DCreate8_t(LPCGUID lpcGuidDevice, void** ppDS8, void* pUnkOuter);
+    Direct3DCreate8_t* DirectSoundCreate8_orig = (Direct3DCreate8_t*)(void*)GetProcAddress(dsounddll, "DirectSoundCreate8");
 
-    return Direct3DCreate8_orig(SDKVersion);
+    return DirectSoundCreate8_orig(lpcGuidDevice, ppDS8, pUnkOuter);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)

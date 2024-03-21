@@ -45,7 +45,7 @@
     <ClInclude Include="src\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\d3d8.def" />
+    <None Include="res\bf42plus.def" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -101,10 +101,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>d3d8</TargetName>
+    <TargetName>dsound</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetName>d3d8</TargetName>
+    <TargetName>dsound</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -127,7 +127,7 @@
       <EnableUAC>false</EnableUAC>
       <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
-      <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>res/bf42plus.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
@@ -170,7 +170,7 @@ git describe --tags --long &gt;&gt; src\gitversion.h</Command>
       <EnableUAC>false</EnableUAC>
       <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
-      <ModuleDefinitionFile>res/d3d8.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>res/bf42plus.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
       <AdditionalOptions>/PDBALTPATH:$(TargetName).pdb %(AdditionalOptions)</AdditionalOptions>

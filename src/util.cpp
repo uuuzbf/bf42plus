@@ -189,7 +189,7 @@ void debuglog(const char* fmt, ...)
 {
     static FILE* fh = 0;
     if (!fh) {
-        fh = fopen("logs/d3d8_debug.log", "w");
+        fh = fopen("logs/bf42plus_debug.log", "w");
         if (!fh) return;
     }
     va_list va;
