@@ -141,6 +141,14 @@ void patch_serverlist_wrong_version_grey_servers()
     inject_jmp(0x00401784, 4, (void*)0x004017CE, 1);
 }
 
+void patch_WindowWin32__init_hook_for_updating()
+{
+    BEGIN_ASM_CODE(a)
+        mov ecx, updater_wait_for_updating
+        call ecx
+    MOVE_CODE_AND_ADD_CODE(a, 0x00632478, 9, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -154,6 +162,7 @@ void bfhook_init()
     patch_empty_maplist();
     patch_use_mod_in_serverlist_on_connect();
     patch_serverlist_wrong_version_grey_servers();
+    patch_WindowWin32__init_hook_for_updating();
 
     dynbuffer_make_nonwritable();
 }

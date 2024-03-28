@@ -4,6 +4,7 @@ Debug
 Release
 src/gitversion.h
 Release*.7z
+*.aps
 
 # Prerequisites
 *.d

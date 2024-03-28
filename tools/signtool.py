@@ -5,6 +5,7 @@ from nacl.signing import SigningKey, VerifyKey
 from nacl.encoding import HexEncoder
 from nacl.exceptions import BadSignatureError, CryptoError
 from nacl import pwhash, secret, utils
+from nacl.hash import blake2b
 
 def usage():
     n = os.path.basename(sys.argv[0])
@@ -12,6 +13,7 @@ def usage():
     print("%s keygen [-p] <private key file> --- generate private key and save it, output public key" % n, file=sys.stderr)
     print("%s pubkey <private key file> --- read private key and write public key to stdout" % n, file=sys.stderr)
     print("%s verify <pubkey> <signature> <file to verify> --- " % n, file=sys.stderr)
+    print("%s hash <file> --- calculate hash of a file" % n, file=sys.stderr)
     exit(1)
 
 
@@ -128,7 +130,16 @@ def verify():
     except BadSignatureError:
         print("INVALID")
         exit(1)
-        
+
+def hash():
+    try:
+        filename = sys.argv[2]
+    except:
+        usage()
+    
+    result = blake2b((open(filename, 'rb').read() if filename != '-' else sys.stdin.read().encode()), encoder=HexEncoder).decode()
+    print(result)
+    
 
 try:
     subcmd = sys.argv[1]
@@ -139,4 +150,5 @@ if subcmd == "sign": sign()
 elif subcmd == "keygen": keygen()
 elif subcmd == "pubkey": pubkey()
 elif subcmd == "verify": verify()
+elif subcmd == "hash": hash()
 else: usage()

@@ -1,18 +1,27 @@
 #include "pch.h"
+#include <shellapi.h>
+#include <Shlwapi.h>
 
 #include "gitversion.h"
 
 static const wchar_t* UPDATE_SERVER = L"update.bf1942.hu";
 static const unsigned short UPDATE_SERVER_PORT = 0; // default
-static const bool UPDATE_SERVER_HTTPS = true;
-static const wchar_t* UPDATE_CHECK_PATH = L"/update/latest_{CHANNEL}.txt";
+static bool UPDATE_SERVER_HTTPS = true;
+static const wchar_t* UPDATE_CHECK_PATH = L"/update/v2/latest_{CHANNEL}.txt";
 
-std::string updater_state = "uninitialized";
+static const wchar_t* MB_TITLE = L"BF42Plus updater";
+static const char* MB_TITLEA = "BF42Plus updater";
+
+
+static std::string updater_state = "uninitialized";
+// this event is set when update checking is done and the game's main window can be created
+static HANDLE event_update_check_done = 0;
 
 static const unsigned char update_publickey_non_release[crypto_sign_PUBLICKEYBYTES] = {
-    0xBA, 0xB4, 0x90, 0x7C, 0x70, 0x8C, 0xFF, 0xCF, 0x2C, 0xC1, 0x36, 0x14,
-    0x4D, 0xDC, 0x78, 0x65, 0xF0, 0xF4, 0xFD, 0x09, 0x1E, 0x16, 0x09, 0xD9,
-    0xB5, 0xFE, 0xCA, 0x95, 0xE7, 0x07, 0xEE, 0x99
+    0x0C, 0x38, 0x36, 0x54, 0x07, 0xCA, 0xCB, 0xD7,
+    0x6B, 0xC0, 0x04, 0x90, 0x0E, 0xCA, 0xDB, 0x8B,
+    0xF6, 0x80, 0x59, 0xBD, 0xDD, 0xD6, 0x1B, 0x45,
+    0xA6, 0xD8, 0xC9, 0xAC, 0xC7, 0xBD, 0x26, 0xA6
 };
 
 static const unsigned char update_publickey_release[crypto_sign_PUBLICKEYBYTES] = {
@@ -23,20 +32,44 @@ static const unsigned char update_publickey_release[crypto_sign_PUBLICKEYBYTES] 
 };
 
 /// <summary>
+/// Stores info about update to a single file
+/// </summary>
+struct UpdateFile {
+    // path the file should be installed to
+    std::wstring installpath;
+    // path of the file on the update server
+    std::wstring downloadpath;
+    // path to temp file the file was downloaded to, or empty string
+    std::wstring tempfilepath;
+    // size of the file in bytes
+    size_t size;
+    // hash of the file for verification (libsodium crypto_generichash())
+    std::vector<unsigned char> hash;
+};
+
+/// <summary>
 /// Stores information between check_for_update and download_update functions
 /// </summary>
 struct UpdateInfo {
-    // path of update file on the update server
-    std::wstring updatefile;
-    // signature bytes
-    std::vector<unsigned char> signature;
+    // version of the update
+    std::wstring version;
+    // update description, may contain multiple lines
+    std::wstring description;
+    // list of files to be updated
+    std::list<UpdateFile> updatedfiles;
+    // sum of file sizes in updatedfiles
+    size_t totalbytes;
     // release channel used
     std::wstring channel;
 };
 
 const wchar_t* get_update_release_channel()
 {
+#ifdef _DEBUG
+    return L"debug";
+#else
     return L"release";
+#endif
 }
 
 const wchar_t* get_build_release_channel()
@@ -59,6 +92,11 @@ const wchar_t* get_build_version()
 
 extern const char _build_version_dummy[] = "_build_version_=" M_TO_STRING(GIT_VERSION);
 
+static const wchar_t* get_user_agent()
+{
+    return L"BF42Plus/" M_TO_STRING(GIT_VERSION);
+}
+
 
 int compare_version(std::wstring older, std::wstring newer)
 {
@@ -73,21 +111,81 @@ int compare_version(std::wstring older, std::wstring newer)
     return 0; // versions are equal
 }
 
+
+static wchar_t temp_dir[MAX_PATH];
+static bool cleanup_temp_dir()
+{
+    DWORD len = wcslen(temp_dir);
+    temp_dir[len + 1] = 0; // SHFileOperation needs double null terminated strings
+    SHFILEOPSTRUCT fo = {
+        0, // hwnd
+        FO_DELETE,
+        temp_dir, // pFrom
+        0, // pTo, unused
+        FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT,
+        false, // fAnyOperationsAborted
+        0, // hNameMappings
+        L"" // title text, not used
+    };
+    if (SHFileOperation(&fo) != 0) {
+        return false;
+    }
+    return true;
+}
+static bool init_temp_dir(std::wstring& dir)
+{
+    DWORD len = GetTempPath(MAX_PATH, temp_dir);
+    if (MAX_PATH - len < 32) {
+        updater_state = "init temp: path too long";
+        debuglog("init_temp_dir: temp path too long\n");
+        return false;
+    }
+    wcscat(temp_dir, L"bf42pupd\\");
+    if (PathFileExists(temp_dir)) {
+        if (!cleanup_temp_dir()) {
+            updater_state = "init temp: failed to delete old directory";
+            debuglog("init_temp_dir: failed to clean up old temp dir: %ls\n", temp_dir);
+            return false;
+        }
+    }
+    if (!CreateDirectory(temp_dir, 0)) {
+        updater_state = "init temp: failed to create directory";
+        debuglog("init_temp_dir: failed to create temp dir: %ls\n", temp_dir);
+        return false;
+    }
+    dir = temp_dir;
+    return true;
+}
+
 static bool check_for_update(UpdateInfo& info)
 {
     debuglog("check for update\n");
-    HTTPClient http;
-    if (!http.Init(UPDATE_SERVER, UPDATE_SERVER_PORT, UPDATE_SERVER_HTTPS)) {
-        updater_state = "check: init failed";
-        return false;
-    }
 
     std::wstring latest_version_path = UPDATE_CHECK_PATH;
     info.channel = get_update_release_channel();
     replaceAll(latest_version_path, L"{CHANNEL}", info.channel);
-    if (!http.GET(latest_version_path)) {
-        updater_state = "check: request failed";
+
+    HTTPClient http;
+ retry_request:
+    if (!http.Init(UPDATE_SERVER, UPDATE_SERVER_PORT, UPDATE_SERVER_HTTPS, 1500, get_user_agent())) {
+        updater_state = "check: init failed";
         return false;
+    }
+
+    if (!http.GET(latest_version_path)) {
+        // if the request failed due to a tls error, retry with http instead of https
+        // this shouldn't cause a security issue because the update txt file is signed
+        // and all update files are verified by hash
+        if (http.getLastError() == ERROR_WINHTTP_SECURE_FAILURE && UPDATE_SERVER_HTTPS) {
+            debuglog("check: ERROR_WINHTTP_SECURE_FAILURE, disabling https\n");
+            http.reset();
+            UPDATE_SERVER_HTTPS = false;
+            goto retry_request;
+        }
+        else {
+            updater_state = "check: request failed";
+            return false;
+        }
     }
 
     int status = http.status();
@@ -97,77 +195,131 @@ static bool check_for_update(UpdateInfo& info)
         return false;
     }
 
-    std::wstring response;
-    if (!http.text(response)) {
+    std::vector<char> response;
+    if (!http.data(response)) {
         updater_state = "check: reading response failed";
         return false;
     }
 
-    auto ss = std::wstringstream{ response };
-    std::wstring version, hexsignature;
-    std::getline(ss, version);
-    std::getline(ss, hexsignature);
-    std::getline(ss, info.updatefile);
+    // the update info file is a text file with unix line endings (only LF)
+    // the format of the file is the following:
+    // <signature>                          - signature of the update file, starting from the beginning of the next line
+    // <version>                            - version string of the current available update
+    // <multiple lines of update description>
+    // END_DESCRIPTION
+    // <installpath>;<downloadpath>;<size>;<hash>  - a file to update
+    //
+    // an update info file may have multiple file-to-update lines
+    // <installpath> is relative to the game's base directory (working directory of the current process)
+    // <downloadpath> is a URI path on the update server
+    // <size> is the size of the new file in bytes
+    // <hash> is the hash of the file to be updated, using libsodum crypto_generichash
+    // the update info file's last line must have a trailing newline character
+    // the update info file must not contain trailing whitespaces
 
-    debuglog("newest version: '%ls'\nsignature: '%ls'\nupdatefile: '%ls'\n", version.c_str(), hexsignature.c_str(), info.updatefile.c_str());
-
-    if (hexsignature.size() != crypto_sign_BYTES*2 || info.updatefile.size() == 0) {
+    // first line only contains a hexadecimal signature, so the position of the first newline is given
+    size_t first_eol = crypto_sign_BYTES * 2;
+    if (response.size() <= first_eol || response.at(first_eol) != '\n') {
         updater_state = "check: malformed response";
+        debuglog("check: signature newline not found\n");
         return false;
     }
 
-    if (!HexStringToData(hexsignature, info.signature)) {
-        updater_state = "check: invalid update signature";
-        debuglog("invalid update signature\n");
+    std::vector<unsigned char> signature;
+    if (!HexDataToData(response, 0, first_eol, signature)) {
+        updater_state = "check: malformed signature";
+        debuglog("check: malformed signature\n");
+    }
+
+    const char* data = response.data() + first_eol + 1;
+    size_t datalength = response.size() - first_eol - 1;
+
+    const unsigned char* pubkey = info.channel == L"release" ? update_publickey_release : update_publickey_non_release;
+
+    if (crypto_sign_verify_detached(signature.data(), reinterpret_cast<const unsigned char*>(data), datalength, pubkey) < 0) {
+        updater_state = "check: signature check failed";
+        debuglog("check: crypto_sign_verify_detached failed\n");
         return false;
     }
 
+    auto ss = std::wstringstream{ UTF8ToWideString(data, datalength) };
+    std::getline(ss, info.version);
+    debuglog("update check version: %ls\n", info.version.c_str());
+    
+    // version string is read, we can do the need-to-update check here
+    
     // update if:
     //  updating to a different release channel OR
     //  build version differs
-    if (wcscmp(get_update_release_channel(), get_build_release_channel()) != 0) {
-        return true;
+
+    // if release channels don't match then always update, otherwise check version
+    if (wcscmp(get_update_release_channel(), get_build_release_channel()) == 0) {
+
+        int compareResult = compare_version(get_build_version(), info.version);
+        if (compareResult == 0) {
+            updater_state = "up-to-date";
+            return false;
+        }
+        else if(compareResult == -1){
+            updater_state = "newer-than-update-server";
+            return false;
+        }
+        // compareResult is 1, update needed, continue with parsing update info
     }
 
-    int compareResult = compare_version(get_build_version(), version);
-    if (compareResult == 1) return true; // version is newer, update
-    if (compareResult == 0) {
-        updater_state = "up-to-date";
+    // read description
+    std::wstringstream description;
+    for (std::wstring line;;) {
+        if (!std::getline(ss, line)) {
+            updater_state = "check: unterminated description";
+            debuglog("check: unterminated description\n");
+            return false;
+        }
+        if (line == L"END_DESCRIPTION") {
+            break;
+        }
+        description << line << "\r\n";
     }
-    else { // -1
-        updater_state = "newer-than-update-server";
+    info.description = description.str();
+    debuglog("description:\n%ls", info.description.c_str());
+
+    // read file update info
+    for (;;)
+    {
+        UpdateFile file;
+        if (!std::getline(ss, file.installpath, ss.widen(';'))) {
+            // end of file reached
+            break;
+        }
+        std::getline(ss, file.downloadpath, ss.widen(';'));
+        ss >> file.size;
+        ss.get(); // skip ; after size
+        std::wstring hashstr;
+        std::getline(ss, hashstr); // last field, also read EOL
+        // unhex the hash, and do basic checks on other fields
+        if (!HexStringToData(hashstr, file.hash) || file.hash.size() != crypto_generichash_BYTES || file.size == 0 || file.downloadpath.empty() || file.installpath.empty()) {
+            updater_state = "check: parsing file failed";
+            debuglog("check: parsing file failed, downloadpath:'%ls' installpath:'%ls' size:%zu hashstr:'%ls'\n", file.downloadpath.c_str(), file.installpath.c_str(), file.size, hashstr.c_str());
+            return false;
+        }
+
+        info.updatedfiles.push_back(file);
     }
-    return false;
+
+    return true;
 }
 
-// download updated file, verify it with pubkey and save it somewhere
-static bool download_update(UpdateInfo& info)
+// download updated file, verify hash and save it somewhere
+static bool download_update_file(HTTPClient& http, UpdateFile& file, const std::wstring& tempdir)
 {
-    wchar_t modulepath[MAX_PATH];
-    DWORD result = GetModuleFileName(g_this_module, modulepath, MAX_PATH);
-    if (result > (MAX_PATH - 10)) {
-        updater_state = "download: module path too long";
-        debuglog("module path is too long!\n");
+    wchar_t tempfilepath[MAX_PATH];
+    if (GetTempFileName(tempdir.c_str(), L"UPD", 0, tempfilepath) == 0) {
+        updater_state = "download: get temp file failed";
+        debuglog("download: failed to create temp file in %ls\n", tempdir.c_str());
         return false;
     }
 
-    wcscat(modulepath, L".updated");
-
-    std::ofstream updatefs(modulepath, std::ios::out | std::ios::trunc | std::ios::binary);
-
-    if (updatefs.fail()) {
-        updater_state = "download: failed to create new file";
-        debuglog("failed to create new file when updating: %ls\n", modulepath);
-        return false;
-    }
-
-    HTTPClient http;
-    if (!http.Init(UPDATE_SERVER, UPDATE_SERVER_PORT, UPDATE_SERVER_HTTPS)) {
-        updater_state = "download: init failed";
-        return false;
-    }
-
-    if (!http.GET(info.updatefile)) {
+    if (!http.GET(file.downloadpath)) {
         updater_state = "download: request failed";
         return false;
     }
@@ -175,7 +327,7 @@ static bool download_update(UpdateInfo& info)
     int status = http.status();
     if (status != 200) {
         updater_state = std::format("download: server returned {}", status);
-        debuglog("server returned %d\n", status);
+        debuglog("download: server returned %d\n", status);
         return false;
     }
 
@@ -185,78 +337,225 @@ static bool download_update(UpdateInfo& info)
         return false;
     }
 
-    if (sodium_init() < 0) {
-        updater_state = "download: sodium_init failed";
-        debuglog("sodium_init failed\n");
+    unsigned char downloadhash[crypto_generichash_BYTES];
+    // return value not documented? never fails?
+    crypto_generichash(downloadhash, sizeof(downloadhash), reinterpret_cast<const unsigned char*>(filedata.data()), filedata.size(), 0, 0);
+
+    if (file.hash.size() != crypto_generichash_BYTES || memcmp(downloadhash, file.hash.data(), sizeof(downloadhash)) != 0) {
+        updater_state = "download: file verification failed";
+        debuglog("download: hash of file %ls is incorrect\n", file.downloadpath.c_str());
         return false;
     }
 
-    const unsigned char* pubkey = info.channel == L"release" ? update_publickey_release : update_publickey_non_release;
+    {
+        std::ofstream fs(tempfilepath, std::ios::out | std::ios::trunc | std::ios::binary);
+        if (fs.fail()) {
+            updater_state = "download: failed to create file";
+            debuglog("failed to create file when updating: %ls\n", tempfilepath);
+            return false;
+        }
 
-    if (crypto_sign_verify_detached(info.signature.data(), reinterpret_cast<unsigned char*>(filedata.data()), filedata.size(), pubkey) < 0) {
-        updater_state = "download: signature check failed";
-        debuglog("crypto_sign_verify_detached failed\n");
+        fs.write(filedata.data(), filedata.size());
+        if (fs.bad()) {
+            updater_state = "download: writing file data failed";
+            debuglog("failed to write file when updating: %ls\n", tempfilepath);
+            return false;
+        }
+    }
+
+    file.tempfilepath = tempfilepath;
+
+    debuglog("downloaded %ls to %ls\n", file.downloadpath.c_str(), file.tempfilepath.c_str());
+    return true;
+}
+
+
+static bool download_update(UpdateInfo& info, const std::wstring& tempdir)
+{
+    HTTPClient http;
+    if (!http.Init(UPDATE_SERVER, UPDATE_SERVER_PORT, UPDATE_SERVER_HTTPS, 5000)) {
+        updater_state = "download: http init failed";
         return false;
     }
 
-    updatefs.write(filedata.data(), filedata.size());
-    if (updatefs.bad()) {
-        updater_state = "download: writing file data failed";
-        return false;
+    for (auto& file : info.updatedfiles) {
+        if (!download_update_file(http, file, tempdir)) {
+            MessageBox(0, L"Failed to download an update file", MB_TITLE, MB_ICONERROR);
+            debuglog("failed to download file %ls\n", file.downloadpath.c_str());
+            return false;
+        }
     }
-
-    debuglog("downloaded update to %ls\n", modulepath);
-
     return true;
 }
 
 // replace loaded dll with new one
-static bool apply_update()
+static bool apply_update(UpdateInfo& info)
 {
-    // renaming works even when the dll is currently loaded
-    std::wstring modulepath;
-    modulepath.resize(MAX_PATH);
-    DWORD result = GetModuleFileName(g_this_module, modulepath.data(), MAX_PATH);
-    if (result > (MAX_PATH - 10)) {
-        updater_state = "download: module path too long";
-        debuglog("module path is too long!\n");
-        return false;
-    }
-    modulepath.resize(result);
+    for (auto& file : info.updatedfiles) {
+        std::wstring oldfilepath = file.installpath + L".oldversion";
+        // try deleting <targetfile>.oldversion in every case to clean up
+        if (DeleteFile(oldfilepath.c_str())) {
+            debuglog("apply: old %ls deleted\n", oldfilepath.c_str());
+        }
 
-    auto updated_path = modulepath + L".updated";
-    auto old_path = modulepath + L".oldversion";
+        bool oldFileMoved = false;
+        // if target file exists, add .oldversion suffix
+        if (PathFileExists(file.installpath.c_str())) {
+            if (!MoveFile(file.installpath.c_str(), oldfilepath.c_str())) {
+                debuglog("apply: failed to move %ls to %ls\n", file.installpath.c_str(), oldfilepath.c_str());
+                updater_state = "apply: failed to move file to .oldversion";
+                return false;
+            }
+            oldFileMoved = true;
+        }
 
-    if (DeleteFile(old_path.c_str())) {
-        debuglog("old update file deleted\n");
+        // move the new file to the target path
+        if (!MoveFile(file.tempfilepath.c_str(), file.installpath.c_str())) {
+            debuglog("apply: failed to move temp %ls to %ls\n", file.tempfilepath.c_str(), file.installpath.c_str());
+            updater_state = "apply: failed to move new file from temp";
+            // try moving back the original file
+            if (oldFileMoved && !MoveFile(oldfilepath.c_str(), file.installpath.c_str())) {
+                debuglog("apply: failed to recover old file\n");
+            }
+            return false;
+        }
+        // file update applied, clear temp path
+        file.tempfilepath.clear();
+        debuglog("applied update %ls\n", file.installpath.c_str());
     }
-
-    if (!MoveFile(modulepath.c_str(), old_path.c_str())) {
-        updater_state = "download: failed to move old dll";
-        debuglog("failed to move dll from %ls to %ls\n", modulepath.c_str(), old_path.c_str());
-        return false;
-    }
-
-    if (!MoveFile(updated_path.c_str(), modulepath.c_str())) {
-        updater_state = "download: failed to move new dll";
-        debuglog("failed to move dll from %ls to %ls\n", updated_path.c_str(), modulepath.c_str());
-        return false;
-    }
-    debuglog("update applied");
     return true;
+}
+
+BOOL CALLBACK UpdateAvailableProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_INITDIALOG:
+        {
+            // center dialog window
+            RECT windowsize, desktopsize;
+            GetWindowRect(GetDesktopWindow(), &desktopsize);
+            GetWindowRect(hwnd, &windowsize);
+            OffsetRect(&desktopsize, -((windowsize.right - windowsize.left) / 2), -((windowsize.bottom - windowsize.top) / 2));
+            SetWindowPos(hwnd, 0, desktopsize.left + (desktopsize.right - desktopsize.left) / 2, desktopsize.top + (desktopsize.bottom - desktopsize.top) / 2, 0, 0, SWP_NOSIZE);
+
+            UpdateInfo* info = reinterpret_cast<UpdateInfo*>(lParam);
+            SetWindowText(GetDlgItem(hwnd, IDC_STATIC_OLD_VERSION), get_build_version());
+            SetWindowText(GetDlgItem(hwnd, IDC_STATIC_NEW_VERSION), info->version.c_str());
+            SetWindowText(GetDlgItem(hwnd, IDC_UPDATE_DESCRIPTION), info->description.c_str());
+            HWND filelist = GetDlgItem(hwnd, IDC_UPDATE_FILES);
+            LVCOLUMN col;
+            col.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
+            col.fmt = LVCFMT_LEFT;
+            col.iSubItem = 0;
+            col.pszText = const_cast<wchar_t*>(L"File");
+            col.cx = 250;
+            ListView_InsertColumn(filelist, col.iSubItem, &col);
+            col.iSubItem = 1;
+            col.pszText = const_cast<wchar_t*>(L"Size");
+            col.cx = 80;
+            ListView_InsertColumn(filelist, col.iSubItem, &col);
+
+            int row = 0;
+            for (auto it = info->updatedfiles.begin(); it != info->updatedfiles.end(); it++)
+            {
+                LVITEM item;
+                item.mask = LVIF_TEXT;
+                item.iItem = row++;
+                item.iSubItem = 0;
+                item.pszText = const_cast<wchar_t*>(it->installpath.c_str());
+                ListView_InsertItem(filelist, &item);
+                item.iSubItem = 1;
+                wchar_t size[32];
+                _snwprintf(size, 32, L"%u", it->size);
+                item.pszText = size;
+                ListView_SetItem(filelist, &item);
+            }
+            return TRUE;
+        }
+        case WM_COMMAND:
+            switch (LOWORD(wParam)) {
+                case IDOK: // update button pressed
+                case IDCANCEL: // skip button
+                    EndDialog(hwnd, wParam); // DialogBoxParam() will return either IDOK or IDCANCEL
+                    return TRUE;
+            }
+
+    }
+    return FALSE;
+}
+
+/// <summary>
+/// restart bf1942.exe with same parameters
+/// </summary>
+void restart_bf1942()
+{
+    STARTUPINFO si = { 0 };
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi;
+    if (!CreateProcess(0, GetCommandLine(), 0, 0, false, CREATE_NEW_PROCESS_GROUP, 0, 0, &si, &pi)) {
+        char errmsg[256];
+        _snprintf(errmsg, 256, "Failed to create process when restarting BF1942.exe\n\nError code: %08X", GetLastError());
+        errmsg[255] = 0;
+        MessageBoxA(0, errmsg, MB_TITLEA, MB_ICONERROR);
+    }
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    ExitProcess(0);
+}
+
+void updater_wait_for_updating()
+{
+    if (event_update_check_done == 0) return;
+    WaitForSingleObject(event_update_check_done, INFINITE);
 }
 
 static DWORD __stdcall updater_thread(void* ptr)
 {
     (void)ptr;
     debuglog("updater thread started\n");
+    if (sodium_init() < 0) {
+        updater_state = "sodium_init failed";
+        debuglog("sodium_init failed\n");
+        return 1;
+    }
     UpdateInfo info;
     if (check_for_update(info)) {
-        if (download_update(info)) {
-            apply_update();
-            updater_state = "update applied";
+        int result = DialogBoxParam((HINSTANCE)g_this_module, MAKEINTRESOURCE(IDD_UPDATE_AVAILABLE), 0, UpdateAvailableProc, reinterpret_cast<LPARAM>(&info));
+        debuglog("DialogBoxParam = %d  GetLastError() = %u\n", result, GetLastError());
+
+        if (result == IDOK) {
+            std::wstring tempdir;
+            if (init_temp_dir(tempdir)) {
+                if (download_update(info, tempdir)) {
+                    if (apply_update(info)) {
+                        updater_state = "update applied";
+                        MessageBox(0, L"Updating complete!\n\nBattlefield 1942 will now restart!", MB_TITLE, 0);
+                        restart_bf1942();
+                    }
+                    else {
+                        MessageBox(0, L"Applying update failed, continuing with old version.", MB_TITLE, MB_ICONEXCLAMATION);
+                    }
+                }
+                else {
+                    MessageBox(0, L"Downloading update failed, continuing with old version.", MB_TITLE, MB_ICONEXCLAMATION);
+                }
+                cleanup_temp_dir();
+            }
+            else {
+                MessageBox(0, L"Failed to create temporary directory for downloading, continuing with old version.", MB_TITLE, MB_ICONEXCLAMATION);
+            }
+        }
+        else {
+            updater_state = "update skipped by user";
         }
     }
+#ifdef _DEBUG
+    if (MessageBoxA(0, updater_state.c_str(), "start game?", MB_ICONINFORMATION | MB_YESNO) == IDNO) {
+        ExitProcess(0);
+    }
+#endif
+    SetEvent(event_update_check_done);
 
     // write status string to file, this is a temporary solution until some user interface will be available
     std::ofstream status("updatestatus.txt", std::ios::out | std::ios::trunc);
@@ -271,5 +570,6 @@ static DWORD __stdcall updater_thread(void* ptr)
 // start a thread to do updating in background
 void updater_client_startup()
 {
+    event_update_check_done = CreateEvent(0, TRUE, FALSE, 0);
     CreateThread(0, 0, updater_thread, 0, 0, 0);
 }

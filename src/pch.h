@@ -14,19 +14,26 @@
 #define _CRT_SECURE_NO_WARNINGS
 // Windows Header Files
 #include <windows.h>
+#include <CommCtrl.h>
+#include <commdlg.h>
 #include <initializer_list>
 #include <string>
+#include <vector>
+#include <list>
 #include <format>
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <locale>
+#include <optional>
 #include <cstdio>
 #include <cstdint>
 #include <ctime>
 
 #define SODIUM_STATIC
 #include <sodium.h>
+
+#include "../res/resource.h"
 
 #include "updater.h"
 #include "hooks.h"

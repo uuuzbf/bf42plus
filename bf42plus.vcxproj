@@ -37,6 +37,7 @@
     <ClCompile Include="src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="res\resource.h" />
     <ClInclude Include="src\bfhook.h" />
     <ClInclude Include="src\bf\stl.h" />
     <ClInclude Include="src\hooks.h" />
@@ -46,6 +47,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\bf42plus.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\bf42plus.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -126,7 +130,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;shell32.lib;Shlwapi.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/bf42plus.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>
@@ -169,7 +173,7 @@ git describe --tags --long &gt;&gt; src\gitversion.h</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <ProgramDatabaseFile>$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;winhttp.lib;shell32.lib;Shlwapi.lib;$(ProjectDir)\libs\libsodium\libsodium.lib</AdditionalDependencies>
       <ModuleDefinitionFile>res/bf42plus.def</ModuleDefinitionFile>
       <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
       <LargeAddressAware>true</LargeAddressAware>

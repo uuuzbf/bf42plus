@@ -231,7 +231,32 @@ bool HexStringToData(const std::wstring& str, std::vector<unsigned char>& data)
     return true;
 }
 
-#ifdef _DEBUG
+bool HexDataToData(const std::vector<char>& hex, size_t offset, size_t length , std::vector<unsigned char>& data)
+{
+    if ((length % 2) != 0 || offset+length > hex.size()) {
+        return false;
+    }
+    data.resize(length / 2);
+    char high = -1;
+    size_t idx = 0;
+    for (size_t i = offset; i < (offset + length); i++) {
+        int value;
+        char c = hex.at(i);
+        if (c >= '0' && c <= '9') value = c - '0';
+        else if (c >= 'A' && c <= 'F') value = c - 'A' + 10;
+        else if (c >= 'a' && c <= 'f') value = c - 'a' + 10;
+        else return false;
+        if (high != -1) {
+            data[idx++] = (high << 4) | (char)value;
+            high = -1;
+        }
+        else {
+            high = (char)value;
+        }
+    }
+    return true;
+}
+
 void debuglog(const char* fmt, ...)
 {
     static FILE* fh = 0;
