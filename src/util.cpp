@@ -8,28 +8,56 @@ HTTPClient::~HTTPClient()
     session = connect = request = 0;
 }
 
-bool HTTPClient::Init(const std::wstring hostname, unsigned short port, bool https)
+bool HTTPClient::Init(const std::wstring hostname, unsigned short port, bool https, int timeout, std::optional<std::wstring> agent)
 {
     debuglog("%s -> %ls\n", https ? "https" : "http", hostname.c_str());
     // use WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY? Win8.1+ only
      // flag WINHTTP_FLAG_ASYNC exists, might be useful
-    session = WinHttpOpen(0, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0 /* flags */);
+    session = WinHttpOpen(agent.has_value() ? agent.value().c_str() : 0, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0 /* flags */);
     if (!session) {
-        debuglog("%s failed\n", "WinHttpOpen");
+        debuglog("%s failed: %08X\n", "WinHttpOpen", lastError = GetLastError());
         return false;
     }
-    debuglog("%s ok\n", "WinHttpOpen");
+
+    if (WinHttpSetStatusCallback(session, statusCallback, WINHTTP_CALLBACK_FLAG_SECURE_FAILURE, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
+    {
+        debuglog("%s failed: %08X\n", "Init WinHttpSetStatusCallback WINHTTP_CALLBACK_FLAG_SECURE_FAILURE", lastError = GetLastError());
+        return false;
+    }
+    {
+        DWORD_PTR ref = reinterpret_cast<DWORD_PTR>(this);
+        if (!WinHttpSetOption(session, WINHTTP_OPTION_CONTEXT_VALUE, reinterpret_cast<LPVOID*>(&ref), sizeof(ref))) {
+            debuglog("%s failed: %08X\n", "Init WinHttpSetOption WINHTTP_OPTION_CONTEXT_VALUE", lastError = GetLastError());
+            return false;
+        }
+    }
+
+    if (timeout != 0) {
+        if (!WinHttpSetTimeouts(session, timeout, timeout, timeout, timeout)) {
+            debuglog("%s failed: %08X\n", "WinHttpSetTimeouts", lastError = GetLastError());
+            return false;
+        }
+    }
+
     if (!port) port = https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
 
     connect = WinHttpConnect(session, hostname.c_str(), port, 0);
     if (!connect) {
-        debuglog("%s failed\n", "WinHttpConnect");
+        debuglog("%s failed: %08X\n", "WinHttpConnect", lastError = GetLastError());
         return false;
     }
     isHTTPS = https;
     debuglog("%s ok\n", "WinHttpConnect");
 
     return true;
+}
+
+void HTTPClient::reset()
+{
+    // call destructor then the constructor to reinitialize the object
+    // as long as both calls remain unchanged below this should be safe
+    this->~HTTPClient();
+    new (this) HTTPClient();
 }
 
 bool HTTPClient::GET(const std::wstring path)
@@ -44,19 +72,26 @@ bool HTTPClient::GET(const std::wstring path)
 
     request = WinHttpOpenRequest(connect, L"GET", path.c_str(), 0 /* HTTP 1.1 */, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, isHTTPS ? WINHTTP_FLAG_SECURE : 0 /* flags */);
     if (!request) {
-        debuglog("%s failed\n", "WinHttpOpenRequest");
+        debuglog("%s failed: %08X\n", "WinHttpOpenRequest", lastError = GetLastError());
         return false;
     }
-    debuglog("%s ok\n", "WinHttpOpenRequest");
 
+    // if disabling CA verification is ever needed, look at this:
+    // https://stackoverflow.com/questions/19338395/how-do-you-use-winhttp-to-do-ssl-with-a-self-signed-cert
     if (!WinHttpSendRequest(request, 0, 0, 0, 0, 0, 0)) {
-        debuglog("%s failed\n", "WinHttpSendRequest");
+        DWORD err = lastError = GetLastError();
+        if (err == ERROR_WINHTTP_SECURE_FAILURE && secureFailFlags) {
+            debuglog("%s failed: %08X %d\n", "WinHttpSendRequest", err, secureFailFlags);
+            secureFailFlags = 0;
+        }
+        else {
+            debuglog("%s failed: %08X\n", "WinHttpSendRequest", err);
+        }
         return false;
     }
-    debuglog("%s ok\n", "WinHttpSendRequest");
 
     if (!WinHttpReceiveResponse(request, 0)) {
-        debuglog("%s failed\n", "WinHttpReceiveResponse");
+        debuglog("%s failed: %08X\n", "WinHttpReceiveResponse", lastError = GetLastError());
         return false;
     }
     debuglog("GET ok\n");
@@ -82,7 +117,7 @@ bool HTTPClient::data(std::vector<char>& data)
     for (;;) {
         DWORD bytesAvailable;
         if (!WinHttpQueryDataAvailable(request, &bytesAvailable)) {
-            debuglog("%s failed\n", "WinHttpQueryDataAvailable");
+            debuglog("%s failed: %08X\n", "WinHttpQueryDataAvailable", lastError = GetLastError());
             return false;
         }
         if (bytesAvailable == 0) break;
@@ -110,7 +145,7 @@ bool HTTPClient::data(std::vector<char>& data)
         DWORD bytesRead;
         debuglog("WinHttpReadData %p offset %zu length %u\n", data.data(), totalBytesRead, bytesAvailable);
         if (!WinHttpReadData(request, data.data() + totalBytesRead, bytesAvailable, &bytesRead)) {
-            debuglog("%s failed\n", "WinHttpReadData");
+            debuglog("%s failed: %08X\n", "WinHttpReadData", lastError = GetLastError());
             return false;
         }
 
@@ -130,6 +165,18 @@ bool HTTPClient::text(std::wstring& text)
 
     text = UTF8ToWideString(responseBytes.data(), responseBytes.size());
     return true;
+}
+
+VOID HTTPClient::statusCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
+{
+    (void)dwStatusInformationLength;
+    debuglog("HTTPClient::statusCallback %p %p %08X %p\n", hInternet, dwContext, dwInternetStatus, lpvStatusInformation);
+    HTTPClient* http = reinterpret_cast<HTTPClient*>(dwContext);
+    if (!http) return;
+    if (dwInternetStatus == WINHTTP_CALLBACK_STATUS_SECURE_FAILURE) {
+        http->secureFailFlags = *(reinterpret_cast<DWORD*>(lpvStatusInformation));
+        debuglog("WINHTTP_CALLBACK_STATUS_SECURE_FAILURE = %08X, %d\n", http->secureFailFlags, http->secureFailFlags);
+    }
 }
 
 std::wstring UTF8ToWideString(const char* s, size_t len)
