@@ -53,7 +53,8 @@ bool HexDataToData(const std::vector<char>& hex, size_t offset, size_t length, s
 
 bool CenterWindow(HWND window);
 
+//#ifdef _DEBUG
 void debuglog(const char* fmt, ...);
-#else
-#define debuglog(...)
-#endif
+//#else
+//#define debuglog	(void)
+//#endif

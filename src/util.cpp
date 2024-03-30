@@ -266,10 +266,12 @@ bool CenterWindow(HWND window)
     return SetWindowPos(window, 0, desktopsize.left + (desktopsize.right - desktopsize.left) / 2, desktopsize.top + (desktopsize.bottom - desktopsize.top) / 2, 0, 0, SWP_NOSIZE);
 }
 
+//#ifdef _DEBUG
 void debuglog(const char* fmt, ...)
 {
     static FILE* fh = 0;
     if (!fh) {
+        CreateDirectory(L"logs", 0);
         fh = fopen("logs/bf42plus_debug.log", "w");
         if (!fh) return;
     }
@@ -280,4 +282,4 @@ void debuglog(const char* fmt, ...)
     fflush(fh);
 
 }
-#endif
+//#endif
