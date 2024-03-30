@@ -257,6 +257,15 @@ bool HexDataToData(const std::vector<char>& hex, size_t offset, size_t length , 
     return true;
 }
 
+bool CenterWindow(HWND window)
+{
+    RECT windowsize, desktopsize;
+    GetWindowRect(GetDesktopWindow(), &desktopsize);
+    GetWindowRect(window, &windowsize);
+    OffsetRect(&desktopsize, -((windowsize.right - windowsize.left) / 2), -((windowsize.bottom - windowsize.top) / 2));
+    return SetWindowPos(window, 0, desktopsize.left + (desktopsize.right - desktopsize.left) / 2, desktopsize.top + (desktopsize.bottom - desktopsize.top) / 2, 0, 0, SWP_NOSIZE);
+}
+
 void debuglog(const char* fmt, ...)
 {
     static FILE* fh = 0;

@@ -432,12 +432,7 @@ BOOL CALLBACK UpdateAvailableProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
     {
         case WM_INITDIALOG:
         {
-            // center dialog window
-            RECT windowsize, desktopsize;
-            GetWindowRect(GetDesktopWindow(), &desktopsize);
-            GetWindowRect(hwnd, &windowsize);
-            OffsetRect(&desktopsize, -((windowsize.right - windowsize.left) / 2), -((windowsize.bottom - windowsize.top) / 2));
-            SetWindowPos(hwnd, 0, desktopsize.left + (desktopsize.right - desktopsize.left) / 2, desktopsize.top + (desktopsize.bottom - desktopsize.top) / 2, 0, 0, SWP_NOSIZE);
+            CenterWindow(hwnd);
 
             UpdateInfo* info = reinterpret_cast<UpdateInfo*>(lParam);
             SetWindowText(GetDlgItem(hwnd, IDC_STATIC_OLD_VERSION), get_build_version());

@@ -51,7 +51,8 @@ std::string	WideStringToASCII(std::wstring s);
 bool HexStringToData(const std::wstring& str, std::vector<unsigned char>& data);
 bool HexDataToData(const std::vector<char>& hex, size_t offset, size_t length, std::vector<unsigned char>& data);
 
-#ifdef _DEBUG
+bool CenterWindow(HWND window);
+
 void debuglog(const char* fmt, ...);
 #else
 #define debuglog(...)
