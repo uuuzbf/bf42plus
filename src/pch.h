@@ -35,12 +35,15 @@
 
 #include "../res/resource.h"
 
+#include "settings.h"
 #include "updater.h"
 #include "hooks.h"
 #include "bfhook.h"
 #include "util.h"
 
 #include "bf/stl.h"
+#include "bf/generic.h"
+#include "bf/gameevent.h"
 
 extern HMODULE g_this_module;
 

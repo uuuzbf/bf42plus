@@ -42,6 +42,15 @@
     <ClCompile Include="src\bf\stl.cpp">
       <Filter>Source Files\bf</Filter>
     </ClCompile>
+    <ClCompile Include="src\settings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bf\gameevent.cpp">
+      <Filter>Source Files\bf</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bf\generic.cpp">
+      <Filter>Source Files\bf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hooks.h">
@@ -64,6 +73,15 @@
     </ClInclude>
     <ClInclude Include="res\resource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bf\gameevent.h">
+      <Filter>Header Files\bf</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bf\generic.h">
+      <Filter>Header Files\bf</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -9,6 +9,7 @@ typedef int __stdcall WinMain_t(HINSTANCE hInstance, HINSTANCE hPrevInstance, LP
 WinMain_t* WinMain_orig = 0;
 int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    g_settings.load();
     bfhook_init();
 
 #ifndef _DEBUG

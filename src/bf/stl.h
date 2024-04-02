@@ -23,6 +23,8 @@ namespace bfs
 
         string(std::string const& str) : string(str.data(), str.size()) {  };
 
+        ~string();
+
         bool empty() const { return length == 0; };
         size_t size() const { return length; };
         const char* c_str() const;

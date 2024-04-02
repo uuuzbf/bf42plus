@@ -164,5 +164,7 @@ void bfhook_init()
     patch_serverlist_wrong_version_grey_servers();
     patch_WindowWin32__init_hook_for_updating();
 
+    gameevent_hook_init();
+
     dynbuffer_make_nonwritable();
 }

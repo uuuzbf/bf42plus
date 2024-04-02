@@ -43,6 +43,14 @@ namespace bfs {
         }
     }
 
+    __declspec(naked) string::~string()
+    {
+        __asm {
+            mov eax, 0x008C311C
+            jmp[eax]
+        }
+    }
+
     __declspec(naked) string& string::replace(size_t pos, size_t len, string const& str)
     {
         __asm {

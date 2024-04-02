@@ -98,7 +98,7 @@ inline void patchBytes(uintptr_t addr, const T& value)
 #define LAMBDA_STDCALL(rettype, args, body)    static_cast<rettype (__stdcall*) args >([] args body)
 #define LAMBDA_FASTCALL(rettype, args, body)    static_cast<rettype (__fastcall*) args >([] args body)
 
-#endif
+#endif // #ifdef __cplusplus
 
 #ifdef _MSC_VER
 // special wrapper macros for MSVC for __asm blocks
@@ -142,4 +142,5 @@ inline void patchBytes(uintptr_t addr, const T& value)
         __asm { mov [end], offset asmblock_ ## key ## _end } \
         move_code_and_add_bytes((addr), (addr_length), start, end - start, (copy_orig), -1); \
     } while(0)
-#endif
+
+#endif // MSC_VER
