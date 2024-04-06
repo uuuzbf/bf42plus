@@ -30,6 +30,8 @@
 #include <cstdint>
 #include <ctime>
 
+#include <intrin.h>
+
 #define SODIUM_STATIC
 #include <sodium.h>
 
@@ -44,6 +46,7 @@
 #include "bf/stl.h"
 #include "bf/generic.h"
 #include "bf/gameevent.h"
+#include "bf/ui.h"
 
 extern HMODULE g_this_module;
 

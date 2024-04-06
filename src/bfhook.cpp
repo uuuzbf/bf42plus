@@ -165,6 +165,7 @@ void bfhook_init()
     patch_WindowWin32__init_hook_for_updating();
 
     gameevent_hook_init();
+    ui_hook_init();
 
     dynbuffer_make_nonwritable();
 }

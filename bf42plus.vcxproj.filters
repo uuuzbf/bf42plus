@@ -51,6 +51,9 @@
     <ClCompile Include="src\bf\generic.cpp">
       <Filter>Source Files\bf</Filter>
     </ClCompile>
+    <ClCompile Include="src\bf\ui.cpp">
+      <Filter>Source Files\bf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hooks.h">
@@ -81,6 +84,9 @@
       <Filter>Header Files\bf</Filter>
     </ClInclude>
     <ClInclude Include="src\bf\generic.h">
+      <Filter>Header Files\bf</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bf\ui.h">
       <Filter>Header Files\bf</Filter>
     </ClInclude>
   </ItemGroup>
