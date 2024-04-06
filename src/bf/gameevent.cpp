@@ -48,11 +48,6 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
             }
             break;
         }
-        case BF_RadioMessageEvent: {
-            auto ev = reinterpret_cast<RadioMessageEvent*>(event);
-            currentMessagePlayerID = ev->playerid;
-            break;
-        }
         case BF_DestroyPlayerEvent: {
             auto ev = reinterpret_cast<DestroyPlayerEvent*>(event);
             currentMessagePlayerID = ev->playerid;

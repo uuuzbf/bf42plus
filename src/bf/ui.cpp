@@ -28,6 +28,13 @@ __declspec(naked) void BfMenu::addPlayerChatMessage(bfs::wstring message, BFPlay
     _asm jmp eax
 }
 
+static uintptr_t addRadioChatMessage_orig = 0x006A8F80;
+__declspec(naked) void BfMenu::addRadioChatMessage(bfs::wstring message, BFPlayer* player, int team) noexcept
+{
+    _asm mov eax, addRadioChatMessage_orig
+    _asm jmp eax
+}
+
 static uintptr_t addChatMessageInternal_orig = 0x006A89C0;
 __declspec(naked) void BfMenu::addChatMessageInternal(bfs::wstring message, int team, int firstLinePos, int* numMessages, int maxLines, int* age, int type, bool isBuddy) noexcept
 {
@@ -69,6 +76,19 @@ void BfMenu::addPlayerChatMessage_hook(bfs::wstring message, BFPlayer* player, i
         }
     }
     addPlayerChatMessage(message, player, team);
+    if (reset) {
+        setCurrentMessagePID(-1);
+    }
+}
+
+void BfMenu::addRadioChatMessage_hook(bfs::wstring message, BFPlayer* player, int team)
+{
+    bool reset = false;
+    if (player) {
+        setCurrentMessagePID(player->getId());
+        reset = true;
+    }
+    addRadioChatMessage(message, player, team);
     if (reset) {
         setCurrentMessagePID(-1);
     }
@@ -148,4 +168,5 @@ void ui_hook_init()
     addChatMessageInternal_orig = (uintptr_t)hook_function(addChatMessageInternal_orig, 5, method_to_voidptr(&BfMenu::addChatMessageInternal_hook));
     addPlayerChatMessage_orig = (uintptr_t)hook_function(addPlayerChatMessage_orig, 5, method_to_voidptr(&BfMenu::addPlayerChatMessage_hook));
     setCenterKillMessage_orig = (uintptr_t)hook_function(setCenterKillMessage_orig, 5, method_to_voidptr(&BfMenu::setCenterKillMessage_hook));
+    addRadioChatMessage_orig = (uintptr_t)hook_function(addRadioChatMessage_orig, 8, method_to_voidptr(&BfMenu::addRadioChatMessage_hook));
 }

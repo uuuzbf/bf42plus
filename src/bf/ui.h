@@ -10,6 +10,8 @@ public:
     void addGameInfoMessage(bfs::wstring message, int team) noexcept;
     void addPlayerChatMessage(bfs::wstring message, BFPlayer* player, int team) noexcept;
     void addPlayerChatMessage_hook(bfs::wstring message, BFPlayer* player, int team);
+    void addRadioChatMessage(bfs::wstring message, BFPlayer* player, int team) noexcept;
+    void addRadioChatMessage_hook(bfs::wstring message, BFPlayer* player, int team);
     void addChatMessageInternal(bfs::wstring message, int team, int firstLinePos, int* numMessages, int maxLines, int* age, int type, bool isBuddy) noexcept;
     void addChatMessageInternal_hook(bfs::wstring message, int team, int firstLinePos, int* numMessages, int maxLines, int* age, int type, bool isBuddy);
     void setCenterKillMessage(bfs::wstring message) noexcept;
