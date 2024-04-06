@@ -14,6 +14,7 @@ public:
     void addChatMessageInternal_hook(bfs::wstring message, int team, int firstLinePos, int* numMessages, int maxLines, int* age, int type, bool isBuddy);
     void setCenterKillMessage(bfs::wstring message) noexcept;
     void setCenterKillMessage_hook(bfs::wstring message);
+    void outputConsole(bfs::string message) noexcept;
 };
 
 

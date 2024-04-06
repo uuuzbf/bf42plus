@@ -36,7 +36,7 @@ public:
     virtual void setIsAIPlayer();
     virtual bool getIsAIPlayer() const;
     virtual void setCamera(IObject* camera);
-
+    static BFPlayer* __stdcall getFromID(int id);
 };
 
 template<int B>

@@ -5,6 +5,7 @@
 enum GameEventID {
     BF_CreatePlayerEvent = 0x08,
     BF_DestroyPlayerEvent = 0x0C,
+    BF_VoteEvent = 0x12,
     BF_ChatFragmentEvent = 0x28,
     BF_ScoreMsgEvent = 0x2a,
     BF_DataBaseCompleteEvent = 0x34,
@@ -23,6 +24,19 @@ enum ScoreEventID : uint32_t {
     SE_SPAWNED = 7,
     SE_OBJECTIVE = 8,
     SE_OBJECTIVETK = 9,
+};
+
+enum VoteAction : uint32_t {
+    VA_START = 0,
+    VA_FAILED = 1,
+    VA_PASSED = 2,
+    VA_UPDATE = 3,
+};
+
+enum VoteType : uint32_t {
+    VT_MAP = 0,
+    VT_KICK = 1,
+    VT_TEAMKICK = 2,
 };
 
 class PacketStatus;
@@ -125,6 +139,20 @@ public:
 };
 
 static_assert(sizeof(SetTeamEvent) == 0x0E);
+
+class VoteEvent : GameEvent {
+public:
+    uint8_t target; // player ID or maplist index
+    uint8_t yesCount;
+    uint8_t noCount; // never used
+    uint8_t votesRequired;
+    uint8_t playerID; // who votes/starts the vote
+    float voteTime;
+    VoteAction action;
+    VoteType type;
+};
+
+static_assert(sizeof(VoteEvent) == 0x1D);
 
 #pragma pack(pop)
 

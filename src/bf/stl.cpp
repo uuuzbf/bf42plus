@@ -51,6 +51,14 @@ namespace bfs {
         }
     }
 
+    __declspec(naked) const char* string::c_str() const
+    {
+        __asm {
+            mov eax, 0x008C30DC
+            jmp [eax]
+        }
+    }
+
     __declspec(naked) string& string::replace(size_t pos, size_t len, string const& str)
     {
         __asm {

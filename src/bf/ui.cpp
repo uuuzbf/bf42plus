@@ -42,6 +42,12 @@ __declspec(naked) void BfMenu::setCenterKillMessage(bfs::wstring message) noexce
     _asm jmp eax
 }
 
+__declspec(naked) void BfMenu::outputConsole(bfs::string message) noexcept
+{
+    _asm mov eax, 0x006A7D00
+    _asm jmp eax
+}
+
 #pragma warning(pop)
 
 void BfMenu::addPlayerChatMessage_hook(bfs::wstring message, BFPlayer* player, int team)

@@ -63,6 +63,21 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
             currentMessagePlayerID = ev->playerid;
             break;
         }
+        case BF_VoteEvent: {
+            auto ev = reinterpret_cast<VoteEvent*>(event);
+            if (g_settings.showVoteInConsole) {
+                if (ev->action == VA_START || ev->action == VA_UPDATE) {
+                    BFPlayer* voter = BFPlayer::getFromID(ev->playerID);
+                    if (voter) {
+                        char message[64];
+                        static const char* voteTypes[8] = {"map", "kick", "teamkick", 0, 0, 0, 0, 0};
+                        if (ev->action == VA_START) _snprintf(message, 64, "%s started a %s vote", voter->getName().c_str(), voteTypes[ev->type]);
+                        else _snprintf(message, 64, "%s voted", voter->getName().c_str());
+                        BfMenu::getSingleton()->outputConsole(message);
+                    }
+                }
+            }
+        }
     }
     return event;
 }
