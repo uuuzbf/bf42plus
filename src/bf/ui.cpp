@@ -118,6 +118,11 @@ void BfMenu::addChatMessageInternal_hook(bfs::wstring message, int team, int fir
 
 void BfMenu::setCenterKillMessage_hook(bfs::wstring message)
 {
+    // Hide "xy is no more" from center kill message display. This allows
+    // the "xy killed a teammate" message to be displayed, otherwise it
+    // is immediatedly overwritten.
+    if ((uintptr_t)_ReturnAddress() == 0x0049469E) return;
+
     // clear non printables to fix some players bugging the message
     {
         wchar_t* data = message.data();
