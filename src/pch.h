@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <ctime>
+#include <cassert>
 
 #include <intrin.h>
 

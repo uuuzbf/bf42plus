@@ -141,6 +141,19 @@ void patch_serverlist_wrong_version_grey_servers()
     inject_jmp(0x00401784, 4, (void*)0x004017CE, 1);
 }
 
+void patch_fix_setting_foregroundlocktimeout()
+{
+    // The game sets ForegroundLockTimeout to 0 on each startup via calling SystemParametersInfo.
+    // The user's profile is also updated, causing the modification to be persistent during reboots.
+    // This function call is very slow, takes around half a second, modifying it to be only temporary,
+    // without affecting the registry makes the call nearly instant. Disabling the call completely may
+    // not be ideal, because if u click another window after BF1942.exe starts, after the window is created,
+    // it will not have focus, and the game can't bring it to front to fix this.
+    BEGIN_ASM_CODE(a)
+        push 2 // change fWinIni parameter from SPIF_UPDATEINIFILE|SPIF_SENDCHANGE to only SPIF_SENDCHANGE
+    PATCH_CODE(a, 0x00632478, 2);
+}
+
 void patch_WindowWin32__init_hook_for_updating()
 {
     BEGIN_ASM_CODE(a)
@@ -162,6 +175,7 @@ void bfhook_init()
     patch_empty_maplist();
     patch_use_mod_in_serverlist_on_connect();
     patch_serverlist_wrong_version_grey_servers();
+    patch_fix_setting_foregroundlocktimeout();
     patch_WindowWin32__init_hook_for_updating();
 
     gameevent_hook_init();

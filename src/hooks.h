@@ -143,4 +143,15 @@ inline void patchBytes(uintptr_t addr, const T& value)
         move_code_and_add_bytes((addr), (addr_length), start, end - start, (copy_orig), -1); \
     } while(0)
 
+#define PATCH_CODE(key, addr, addr_length) \
+        } \
+        asmblock_ ## key ## _end: \
+        uint8_t* start,* end; \
+        __asm { mov [start], offset asmblock_ ## key ## _start } \
+        __asm { mov [end], offset asmblock_ ## key ## _end } \
+        assert((end-start) == (addr_length)); \
+        patch_bytes((addr), start, end-start); \
+    } while(0)
+
+
 #endif // MSC_VER
