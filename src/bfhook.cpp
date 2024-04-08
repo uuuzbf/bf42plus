@@ -154,6 +154,21 @@ void patch_fix_setting_foregroundlocktimeout()
     PATCH_CODE(a, 0x00632478, 2);
 }
 
+void patch_disable_cpu_clock_measurement()
+{
+    // System::getMHZ - remove CPU clock speed measurement, it takes 500ms
+    // This value is used in two places:
+    // - Determining optimal graphical settings, probably, 2200 will force high. (462f9f)
+    // - "cpu" rule query response when hosting server. (bfRulesCallback)
+    // Set clock speed to a fixed value of 2200MHz ()
+    BEGIN_ASM_CODE(a)
+        mov eax, 2200
+        ret
+        nop
+        nop
+    PATCH_CODE(a, 0x00581d90, 8);
+}
+
 void patch_WindowWin32__init_hook_for_updating()
 {
     BEGIN_ASM_CODE(a)
@@ -176,6 +191,7 @@ void bfhook_init()
     patch_use_mod_in_serverlist_on_connect();
     patch_serverlist_wrong_version_grey_servers();
     patch_fix_setting_foregroundlocktimeout();
+    patch_disable_cpu_clock_measurement();
     patch_WindowWin32__init_hook_for_updating();
 
     gameevent_hook_init();
