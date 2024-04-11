@@ -169,6 +169,23 @@ void patch_disable_cpu_clock_measurement()
     PATCH_CODE(a, 0x00581d90, 8);
 }
 
+void patch_fix_MemoryPool_crash_on_loading()
+{
+    // This is an old memory allocator fix i was needing on an older install, probably Win7.
+    // I did not document at the time exactly how it works, it modifies how MemoryPool::alloc
+    // works, it changes the code to check if the pool object has a buffer first.
+    patchBytes(0x00601664, {
+        0x57,                                   // push    edi
+        0x31, 0xDB,                             // xor     ebx, ebx
+        0x3B, 0x5E, 0x1C,                       // cmp     ebx, [esi+MemoryPool.pool_data]
+        0x74, 0x0E,                             // jz      short 60167A ; allocate_pool_buffer
+        0x3B, 0x5E, 0x20,                       // cmp     ebx, [esi+20h]
+        0x0F, 0x84, 0x91, 0x00, 0x00, 0x00,     // jz      pool_has_no_free_slot
+        0x90, 0x90, 0x90,                       // nop nop nop
+        0xEB, 0x7B,                             // jmp     short reserve_space_and_return ; Jump
+    });
+}
+
 void patch_WindowWin32__init_hook_for_updating()
 {
     BEGIN_ASM_CODE(a)
@@ -192,6 +209,8 @@ void bfhook_init()
     patch_serverlist_wrong_version_grey_servers();
     patch_fix_setting_foregroundlocktimeout();
     patch_disable_cpu_clock_measurement();
+    patch_fix_MemoryPool_crash_on_loading();
+
     patch_WindowWin32__init_hook_for_updating();
 
     gameevent_hook_init();
