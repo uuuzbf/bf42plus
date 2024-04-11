@@ -1,8 +1,6 @@
 ## Battlefield 1942 client patches
 This mod provides several improvements to Battlefield 1942.
 
-**IMPORTANT: the mod has been changed to use `dsound.dll` instead of `d3d8.dll`. To update manually remove the old `d3d8.dll` and download the new `dsound.dll`, then place that in your game directory.**
-
 ### Installation
 Copy `dsound.dll` into your game directory.
 
