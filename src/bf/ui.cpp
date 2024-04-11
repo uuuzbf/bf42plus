@@ -168,10 +168,41 @@ void chatMessage(std::string message, bool status, int team)
 }
 
 
+void patch_add_id_to_nametag()
+{
+    static const char* fmt_without_hp = "#%d [%s]";
+    static const char* fmt_with_hp = "#%d [%s] (%d%%)";
+    // add id to nametag without hp
+    BEGIN_ASM_CODE(a)
+        pop ecx
+        push ecx
+        push ecx
+        mov eax, fmt_without_hp
+        mov [esp+4], eax
+        mov eax, [ebp+0x70]
+        mov [esp+8], eax
+        mov eax, 0x008C3520 // sprintf
+        mov eax,[eax] // msvc assembler cant do this in one step
+        call eax
+        add esp,0x10
+    MOVE_CODE_AND_ADD_CODE(a, 0x004416CB, 9, HOOK_DISCARD_ORIGINAL);
+    // add id to nametag with hp
+    BEGIN_ASM_CODE(b)
+        push ecx
+        push eax
+        mov eax,[ebp+0x70]
+        push eax
+        lea edx,[esp+0x1B8]
+        push fmt_with_hp
+    MOVE_CODE_AND_ADD_CODE(b, 0x0044153a, 16, HOOK_DISCARD_ORIGINAL);
+}
+
 void ui_hook_init()
 {
     addChatMessageInternal_orig = (uintptr_t)hook_function(addChatMessageInternal_orig, 5, method_to_voidptr(&BfMenu::addChatMessageInternal_hook));
     addPlayerChatMessage_orig = (uintptr_t)hook_function(addPlayerChatMessage_orig, 5, method_to_voidptr(&BfMenu::addPlayerChatMessage_hook));
     setCenterKillMessage_orig = (uintptr_t)hook_function(setCenterKillMessage_orig, 5, method_to_voidptr(&BfMenu::setCenterKillMessage_hook));
     addRadioChatMessage_orig = (uintptr_t)hook_function(addRadioChatMessage_orig, 8, method_to_voidptr(&BfMenu::addRadioChatMessage_hook));
+
+    if (g_settings.showIDInNametags) patch_add_id_to_nametag();
 }
