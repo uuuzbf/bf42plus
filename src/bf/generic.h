@@ -55,3 +55,17 @@ __declspec(naked) inline void* method_to_voidptr(...) {
     _asm mov eax, [esp + 4]
     _asm ret
 }
+
+
+template<class Tk, class Tv/*, class Tcompare*/>
+class Hash {
+public:
+    class Node {
+        Node* next;
+        Tk key;
+        Tv value;
+    };
+    Node* buckets;
+    size_t numBuckets;
+    uint32_t unknown;
+};

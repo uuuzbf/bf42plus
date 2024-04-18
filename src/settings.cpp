@@ -80,7 +80,6 @@ bool Settings::save(bool force)
         setting->save(ini);
     }
 
-    ini.SaveFile(CONFIG_FILE);
-
+    if(ini.SaveFile(CONFIG_FILE) == SI_OK) return true;
     return false;
 }

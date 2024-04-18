@@ -16,6 +16,8 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
     updater_client_startup();
 #endif
 
+    register_custom_console_commands();
+
     return WinMain_orig(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
 }
 

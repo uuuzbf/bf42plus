@@ -48,6 +48,7 @@
 #include "bf/generic.h"
 #include "bf/gameevent.h"
 #include "bf/ui.h"
+#include "bf/console.h"
 
 extern HMODULE g_this_module;
 

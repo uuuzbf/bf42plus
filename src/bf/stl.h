@@ -2,9 +2,14 @@
 #include <cstdint>
 #include <string>
 
-// bf std::*
+// This file contains simplified implementations of the C++ stl library used by BF1942 (std::*)
+// These classes can be used when interfacing with native game functions.
+
 namespace bfs
 {
+    void* operator_new(size_t);
+    void operator_delete(void*);
+
     //template<class Elem_>
     //class basic_string {
     class string {
@@ -34,6 +39,7 @@ namespace bfs
         string& replace(size_t pos, size_t len, string const& str);
 
         string& operator=(std::string const& str) { return replace(0, size(), string(str)); };
+        string& operator=(const char* str) { return replace(0, size(), string(str)); };
 
     };
 
@@ -78,4 +84,97 @@ namespace bfs
 
     //using string = basic_string<char>;
     //using wstring = basic_string<wchar_t>;
+
+    template <class Tv>
+    class list {
+    public:
+        struct Node;
+        friend struct Node;
+        struct Node {
+            Node* next; // head: first item
+            Node* prev; // head: last item
+            Tv value;
+        };
+        uint32_t allocator = 0;
+        Node* head;
+        size_t _size = 0;
+    public:
+        class iterator;
+        friend class iterator;
+        class iterator {
+            Node* node;
+        public:
+            iterator() {};
+            iterator(Node* n) : node(n) {}
+            Tv& operator*() { return node->value; };
+            iterator& operator++() { node = node->next; return *this; };
+            iterator& operator++(int) { iterator tmp = *this; ++*this; return tmp; };
+            iterator& operator--() { node = node->prev; return *this; };
+            iterator& operator--(int) { iterator tmp = *this; --*this; return tmp; };
+            bool operator==(const iterator& right) { return this->node == right.node; };
+            bool operator!=(const iterator& right) { return this->node != right.node; };
+            Node* getnode() const { return node; };
+        };
+        iterator erase(iterator first, iterator last) {
+            iterator it = first;
+            while (it != last) {
+                iterator it_copy = it;
+                it++;
+                if (it.getnode() != head) {
+                    --this->_size;
+                    it_copy.getnode()->prev->next = it_copy.getnode()->next;
+                    it_copy.getnode()->next->prev = it_copy.getnode()->prev;
+                    operator_delete(it_copy.getnode());
+                }
+            }
+            return it;
+        }
+        list() {
+            head = reinterpret_cast<Node*>(operator_new(sizeof(Node)));
+            head->next = head;
+            head->prev = head;
+        };
+        ~list() {
+            clear();
+            operator_delete(head);
+            head = 0;
+            _size = 0;
+        };
+
+        void push_back(const Tv& value) {
+            Node* newnode = reinterpret_cast<Node*>(operator_new(sizeof(Node)));
+            newnode->value = value;
+            newnode->next = head;
+            newnode->prev = head->prev;
+            newnode->prev->next = newnode;
+            head->prev = newnode;
+        };
+
+        void clear() { erase(begin(), end()); };
+
+        iterator begin() const { return iterator(head ? head->next : 0); };
+        iterator end() const { return iterator(head); };
+
+        bool empty() const { return _size == 0; };
+        size_t size() const { return _size; };
+
+    };
+
+
+    template<class Kt, class Vt>
+    class map {
+    public:
+        enum Color { Red, Black };
+        struct Node {
+            Node* left;
+            Node* parent;
+            Node* right;
+            std::pair<Kt, Vt> pair;
+            Color color;
+        };
+        uint32_t allocator;
+        Node* head;
+        size_t size;
+
+    };
 }

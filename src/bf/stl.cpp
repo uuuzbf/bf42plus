@@ -4,6 +4,22 @@
 #pragma warning(disable: 26495 4100 4410 4409 4740)
 
 namespace bfs {
+    __declspec(naked) void* operator_new(size_t)
+    {
+        __asm {
+            mov eax, 0x0045BAF0
+            jmp eax
+        }
+    }
+
+    __declspec(naked) void operator_delete(void*)
+    {
+        __asm {
+            mov eax, 0x0045BB60
+            jmp eax
+        }
+    }
+
     __declspec(naked) string::string(char const* s)
     {
         __asm {
@@ -39,6 +55,14 @@ namespace bfs {
     {
         __asm {
             mov eax, 0x008C30BC
+            jmp[eax]
+        }
+    }
+
+    __declspec(naked) string::string()
+    {
+        __asm {
+            mov eax, 0x008C3244
             jmp[eax]
         }
     }

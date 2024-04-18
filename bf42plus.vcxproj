@@ -20,6 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bfhook.cpp" />
+    <ClCompile Include="src\bf\console.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="src\bf\gameevent.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
@@ -54,6 +58,7 @@
   <ItemGroup>
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="src\bfhook.h" />
+    <ClInclude Include="src\bf\console.h" />
     <ClInclude Include="src\bf\generic.h" />
     <ClInclude Include="src\bf\gameevent.h" />
     <ClInclude Include="src\bf\stl.h" />
