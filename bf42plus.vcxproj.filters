@@ -95,6 +95,9 @@
     <ClInclude Include="src\bf\console.h">
       <Filter>Header Files\bf</Filter>
     </ClInclude>
+    <ClInclude Include="src\bf\object.h">
+      <Filter>Header Files\bf</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\bf42plus.def">

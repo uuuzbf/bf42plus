@@ -43,8 +43,24 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
         case BF_ScoreMsgEvent: {
             auto ev = reinterpret_cast<ScoreMsgEvent*>(event);
             currentMessagePlayerID = ev->playerid;
-            if (ev->eventid == SE_KILL) {
-                currentMessageSecondaryPlayerID = ev->victimpid;
+            switch (ev->eventid) {
+                case SE_KILL:
+                    currentMessageSecondaryPlayerID = ev->victimpid;
+                    break;
+                case SE_SPAWNED:
+                    if (!dataBaseCompleteEventReceived) {
+                        // Fix for dead players showing as alive snipers after joining a server.
+                        // This happens because when the server sends the database, it sends a ScoreMsgEvent/spawned
+                        // after each CreatePlayerEvent, thus marking all players as alive.
+                        // This fix ignores the SPAWNED event if it is sent during connecting and the
+                        // player's vehicle is a MultiPlayerFreeCamera.
+                        BFPlayer* player = BFPlayer::getFromID(ev->playerid);
+                        IObject* vehicle;
+                        if (player && (vehicle = player->getVehicle()) && vehicle->getTemplate()->getName() == "MultiPlayerFreeCamera") {
+                            goto ignore_event;
+                        }
+                    }
+                    break;
             }
             break;
         }
@@ -75,6 +91,10 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
         }
     }
     return event;
+
+ignore_event:
+    // ignore this event, process the next one
+    return getNextRcvdEvent_hook();
 }
 
 

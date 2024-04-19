@@ -46,6 +46,7 @@
 
 #include "bf/stl.h"
 #include "bf/generic.h"
+#include "bf/object.h"
 #include "bf/gameevent.h"
 #include "bf/ui.h"
 #include "bf/console.h"

@@ -61,6 +61,7 @@
     <ClInclude Include="src\bf\console.h" />
     <ClInclude Include="src\bf\generic.h" />
     <ClInclude Include="src\bf\gameevent.h" />
+    <ClInclude Include="src\bf\object.h" />
     <ClInclude Include="src\bf\stl.h" />
     <ClInclude Include="src\bf\ui.h" />
     <ClInclude Include="src\hooks.h" />

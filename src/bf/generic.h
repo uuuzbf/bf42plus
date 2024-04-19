@@ -9,9 +9,17 @@ public:
     virtual IBase* queryInterface(uint32_t) = 0;
 };
 
+class IConsoleSaveable : public IBase {
+public:
+    virtual bool makeScript(void* stream) = 0; // IStream*
+};
+
+class IObject;
 class BitStream;
 struct PlayerInput;
-class IObject;
+class Vec3;
+typedef Vec3 Pos3;
+class Mat4; // BaseMatrix4<float>
 
 class BFPlayer : public IBase {
 public:
@@ -26,7 +34,7 @@ public:
     virtual void setUpdateFrequencyType(int);
     virtual void handleInput(PlayerInput* input, float tDelta);
     virtual void* getCamera() const;
-    virtual void* getVehicle() const;
+    virtual IObject* getVehicle() const;
     virtual bool setVehicle(IObject* vehicle, int inputid);
     virtual int getInputId() const;
     virtual int getId() const;
