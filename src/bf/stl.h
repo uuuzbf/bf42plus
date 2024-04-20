@@ -38,6 +38,8 @@ namespace bfs
 
         string& replace(size_t pos, size_t len, string const& str);
 
+        string& append(const char* str);
+
         int compare(const char* str) const;
 
         string& operator=(std::string const& str) { return replace(0, size(), string(str)); };

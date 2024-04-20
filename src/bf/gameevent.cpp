@@ -94,7 +94,7 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
 
 ignore_event:
     // ignore this event, process the next one
-    event->~GameEvent();
+    delete event;
     return getNextRcvdEvent_hook();
 }
 

@@ -91,6 +91,14 @@ namespace bfs {
         }
     }
 
+    __declspec(naked) string& string::append(const char* str)
+    {
+        __asm {
+            mov eax, 0x008C30C8
+            jmp[eax]
+        }
+    }
+
     __declspec(naked) int string::compare(const char* str) const
     {
         __asm {
