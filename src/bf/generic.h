@@ -17,6 +17,11 @@ public:
 class IObject;
 class BitStream;
 struct PlayerInput;
+
+struct Vec2 {
+    float x, y;
+};
+
 class Vec3;
 typedef Vec3 Pos3;
 class Mat4; // BaseMatrix4<float>

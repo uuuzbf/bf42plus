@@ -60,6 +60,10 @@ const uint32_t InvalidColor = 0xffffffff;
 uint32_t GetColorFromString(const std::string& name);
 std::string GetStringFromColor(uint32_t color);
 
+struct StringCompareNoCase {
+	bool operator()(const std::string& left, const std::string& right) const { return _stricmp(left.c_str(), right.c_str()) < 0; };
+};
+
 //#ifdef _DEBUG
 void debuglog(const char* fmt, ...);
 //#else

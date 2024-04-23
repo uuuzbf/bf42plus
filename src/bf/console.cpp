@@ -191,6 +191,44 @@ public:
 ConsoleObjectPlusSave commandPlusSave;
 
 
+class ConsoleObjectPlusBuddyColor : public ConsoleObject {
+    std::string buddyname;
+public:
+    ConsoleObjectPlusBuddyColor() {
+        isdynamic = true;
+        type = 0;
+        access = 1;
+        objectname = "plus";
+        functionname = "buddyColor";
+        minargcount = 2;
+        maxargcount = 2;
+        argdesc[0] = "std::string";
+        argdesc[1] = "color";
+        argtype[0] = -1;
+        argtype[1] = -1;
+        customCommands.push_back(this);
+    };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            buddyname = value;
+            args[0] = (intptr_t)&buddyname;
+        }
+        else if (arg == 2) {
+            args[1] = GetColorFromString(value);
+        }
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void* executeObjectMethod() {
+        if (argcount == 2) {
+            setBuddyColor(buddyname, args[1]);
+        }
+        hasreturnvalue = false;
+        return 0;
+    };
+};
+ConsoleObjectPlusBuddyColor commandPlusBuddyColor;
+
+
 void register_custom_console_commands()
 {
     ConsoleObjects::getSingleton()->registerConsoleObjects(customCommands);

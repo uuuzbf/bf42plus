@@ -32,6 +32,7 @@ inline void BoolSetting::save(CSimpleIni& ini) {
 
 Settings::Settings()
 {
+    ini.SetQuotes(true);
     settings = {
         &showConnectsInChat,
         &showIDInChat,
@@ -62,6 +63,31 @@ bool Settings::load()
             // add missing setting with default value by marking it for saving
             setting->dirty = true;
             needToSaveNewSettings = true;
+        }
+    }
+
+    // Load buddy colors from config file
+    if (!ini.SectionExists(L"buddycolors")) {
+        // Section missing, create an empty one with some comments
+        ini.SetValue(L"buddycolors", 0, 0,
+            L"; This section contains the custom buddy colors\n"
+            L"; Keys are player names, values are color codes\n"
+            L"; The color code may be a webcolor name or in #rgb or #rrggbb format\n"
+            L"; playername = colorcode");
+        needToSaveNewSettings = true;
+    }
+    else {
+        CSimpleIni::TNamesDepend names;
+        if (ini.GetAllKeys(L"buddycolors", names)) {
+            for (auto& name : names) {
+                uint32_t color = GetColorFromString(WideStringToASCII(ini.GetValue(L"buddycolors", name.pItem, L"")));
+                if (color != InvalidColor) {
+                    ::setBuddyColor(WideStringToASCII(name.pItem), color);
+                }
+                else {
+                    debuglog("buddycolor: '%ls' invalid in config, ignoring\n", name.pItem);
+                }
+            }
         }
     }
 

@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <array>
 #include <format>
 #include <iostream>
 #include <sstream>
@@ -38,11 +39,11 @@
 
 #include "../res/resource.h"
 
+#include "util.h"
 #include "settings.h"
 #include "updater.h"
 #include "hooks.h"
 #include "bfhook.h"
-#include "util.h"
 
 #include "bf/stl.h"
 #include "bf/generic.h"

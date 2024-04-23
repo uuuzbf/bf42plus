@@ -45,7 +45,7 @@ namespace bfs
         string& operator=(std::string const& str) { return replace(0, size(), string(str)); };
         string& operator=(const char* str) { return replace(0, size(), string(str)); };
         bool operator==(const char* str) const { return compare(str) == 0; };
-
+        operator std::string() const { return std::string(c_str(), size()); };
     };
 
     class wstring {
