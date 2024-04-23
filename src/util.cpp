@@ -206,6 +206,18 @@ std::string WideStringToASCII(std::wstring s)
     return result;
 }
 
+std::wstring ASCIIToWideString(const std::string& s)
+{
+    std::wstring result;
+    result.resize(s.size());
+    size_t i = 0;
+    for (auto c = s.cbegin(); c != s.cend(); c++) {
+        if (*c < 128) result[i++] = (wchar_t)*c;
+        else result[i++] = '?';
+    }
+    return result;
+}
+
 bool HexStringToData(const std::wstring& str, std::vector<unsigned char>& data)
 {
     if ((str.length() % 2) != 0) {
