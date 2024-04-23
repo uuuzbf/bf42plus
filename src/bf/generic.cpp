@@ -14,3 +14,9 @@ __declspec(naked) BFPlayer* __stdcall BFPlayer::getFromID(int id)
         jmp dword ptr [eax+0x18] // tailcall to pPlayerManager->getPlayerFromId()
     }
 }
+
+__declspec(naked) uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str)
+{
+    _asm mov eax, 0x00502E60
+    _asm jmp eax
+}

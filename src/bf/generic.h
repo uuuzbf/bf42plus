@@ -77,3 +77,5 @@ public:
     size_t numBuckets;
     uint32_t unknown;
 };
+
+uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str);
