@@ -97,8 +97,7 @@ void patch_show_version_in_menu()
         s = ss;
         return &s;
     });
-    inject_jmp(0x0045F0C9, 5, reinterpret_cast<void*>(get_version), 1);
-    *(uint8_t*)0x0045F0C9 = 0xE8; // this changes the jmp above to a call (TODO: inject_call)
+    inject_call(0x0045F0C9, 5, reinterpret_cast<void*>(get_version), 1);
 }
 
 void patch_use_mod_in_serverlist_on_connect()

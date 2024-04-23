@@ -278,6 +278,33 @@ void inject_jmp(uintptr_t addr, size_t length, void* target, int need_unprotect)
     nop_bytes(after_jmp, length - jumplen);
 }
 
+// add a jmp at addr to target
+// length must be atleast 5
+// if length is larger than 5, the remaining bytes are replaced with nop
+void inject_call(uintptr_t addr, size_t length, void* target, int need_unprotect)
+{
+    if (need_unprotect)
+    {
+        if (!unprotect((void*)addr, length))
+        {
+            if (logger)fprintf(logger, "inject_call: unprotect failed\n");
+            return;
+        }
+    }
+
+    // try short jump
+    uintptr_t after_call = addr + 5;
+    intptr_t offset = (intptr_t)((uintptr_t)target - after_call);
+    if (length < 5) {
+        if (logger)fprintf(logger, "inject_call at %08X: length must be atleast %d\n", addr, 5);
+        return;
+    }
+    *(uint8_t*)addr = 0xE8; // relative long jump
+    // need to recalculate offset here because different target!
+    *(intptr_t*)((intptr_t)addr + 1) = (intptr_t)((uintptr_t)target - after_call);
+    nop_bytes(after_call, length - 5);
+}
+
 
 
 /*

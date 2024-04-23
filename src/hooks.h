@@ -64,6 +64,7 @@ void inject_ret_value(uintptr_t addr, uint16_t n, uint32_t value);
 void patch_bytes(uintptr_t addr, const uint8_t* bytes, size_t length);
 void* modify_call(uintptr_t addr, void* newaddr);
 void inject_jmp(uintptr_t addr, size_t length, void* target, int need_unprotect);
+void inject_call(uintptr_t addr, size_t length, void* target, int need_unprotect);
 void* hook_function(uintptr_t addr, size_t numbytes, void* hook);
 void* move_code_and_add_bytes(uintptr_t addr, size_t addr_length, const uint8_t* bytes, size_t bytes_length, int copy_orig, ...);
 void trace_function(uintptr_t funcaddr, size_t injectbytes, void(__stdcall* tracer)(const char* name, uintptr_t* arg), const char* name);
