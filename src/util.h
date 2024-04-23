@@ -56,6 +56,10 @@ bool HexDataToData(const std::vector<char>& hex, size_t offset, size_t length, s
 
 bool CenterWindow(HWND window);
 
+const uint32_t InvalidColor = 0xffffffff;
+uint32_t GetColorFromString(const std::string& name);
+std::string GetStringFromColor(uint32_t color);
+
 //#ifdef _DEBUG
 void debuglog(const char* fmt, ...);
 //#else
