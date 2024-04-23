@@ -18,6 +18,12 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 
     register_custom_console_commands();
 
+    if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) {
+        if (MessageBoxA(0, "Left Shift pressed\nStart in window mode?", "BF42Plus", MB_YESNO) == IDYES) {
+            nop_bytes(0x00442686, 2); // force 0 in Setup__setFullScreen
+        }
+    }
+
     return WinMain_orig(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
 }
 
