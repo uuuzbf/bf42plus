@@ -152,6 +152,29 @@ public:
 };
 ConsoleObjectPlusShowVoteInConsole commandPlusShowVoteInConsole;
 
+
+class ConsoleObjectPlusLowerNametags : public ConsoleObjectBoolSetting {
+public:
+    ConsoleObjectPlusLowerNametags() : ConsoleObjectBoolSetting() {
+        functionname = "lowerNametags";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.lowerNametags;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.lowerNametags.value = args[0] != 0;
+            g_settings.lowerNametags.dirty = true;
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusLowerNametags commandPlusLowerNametags;
+
+
 class ConsoleObjectPlusSave : public ConsoleObject {
     bfs::string result;
 public:

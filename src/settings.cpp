@@ -33,12 +33,14 @@ inline void BoolSetting::save(CSimpleIni& ini) {
 Settings::Settings()
 {
     ini.SetQuotes(true);
+
     settings = {
         &showConnectsInChat,
         &showIDInChat,
         &showIDInKills,
         &showIDInNametags,
         &showVoteInConsole,
+        &lowerNametags,
     };
 }
 

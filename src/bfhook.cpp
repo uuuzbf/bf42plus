@@ -185,6 +185,47 @@ void patch_fix_MemoryPool_crash_on_loading()
     });
 }
 
+void patch_lower_nametags_when_close()
+{
+    // Patch to make nametags lower when u get close to players, left is original, right is new
+    // At 20 units distance the nametag starts to gradually get lower, at 0 distance offset is y-1
+    // 00440F90 - D9 44 24 24        fld dword ptr [esp+24]    00440F90 - 8B 4C 24 50        mov ecx,[esp+50] // move pos.x
+    // 00440F94 - D8 44 24 44        fadd dword ptr [esp+44]   00440F94 - 89 4C 24 38        mov [esp+38],ecx
+    // 00440F98 - 99                 cdq                       00440F98 - 99                 cdq
+    // 00440F99 - B9 03000000        mov ecx,00000003          00440F99 - B9 03000000        mov ecx,3
+    // 00440F9E - F7 F9              idiv ecx                  00440F9E - F7 F9              idiv ecx
+    // 00440FA0 - D9 5C 24 7C        fstp dword ptr [esp+7C]   00440FA0 - 8B 44 24 54        mov eax,[esp+54] // move pos.y
+    // 00440FA4 - D9 44 24 28        fld dword ptr [esp+28]    00440FA4 - 89 44 24 3C        mov [esp+3C],eax
+    // 00440FA8 - D8 44 24 48        fadd dword ptr [esp+48]   00440FA8 - 8B 44 24 58        mov eax,[esp+58] // move pos.z
+    // 00440FAC - 8B 44 24 7C        mov eax,[esp+7C]          00440FAC - 89 44 24 40        mov [esp+40],eax
+    // 00440FB0 - 89 44 24 38        mov [esp+38],eax          00440FB0 - D9 44 24 14        fld dword ptr [esp+14] // load distance
+    // 00440FB4 - D9 9C 24 80000000  fstp dword ptr [esp+80]   00440FB4 - D8 1D 345A8D00     fcomp dword ptr [008D5A34] { (20,00) }
+    // 00440FBB - 8B 8C 24 80000000  mov ecx,[esp+00000080]    00440FBA - DFE0               fnstsw ax
+    // 00440FC2 - D9 44 24 2C        fld dword ptr [esp+2C]    00440FBC - F6 C4 41           test ah,41 // distance <= 20
+    // 00440FC6 - 89 4C 24 3C        mov [esp+3C],ecx          00440FBF - 74 1A              je 00440FDB // jump if false
+    // 00440FCA - D8 44 24 4C        fadd dword ptr [esp+4C]   00440FC1 - D9 44 24 3C        fld dword ptr [esp+3C] // load pos.y
+    // 00440FCE - 8B CB              mov ecx,ebx               00440FC5 - D9 05 345A8D00     fld dword ptr [008D5A34] { (20,00) }
+    // 00440FD0 - D9 9C 24 84000000  fstp dword ptr [esp+84]   00440FCB - D9C0               fld st(0) // 20
+    // 00440FD7 - 8B 14 95 14769500  mov edx,[edx*4+00957614]  00440FCD - D8 64 24 14        fsub dword ptr [esp+14] // inv_dist = 20 - distance
+    // 00440FDE - 89 54 24 14        mov [esp+14],edx          00440FD1 - D9C9               fxch st(1) // swap fpu regs 0 and 1
+    // 00440FE2 - 8B 94 24 84000000  mov edx,[esp+84]          00440FD3 - DEF9               fdivp st(1),st(0) // offs = 20 / inv_dist
+    // 00440FE9 - 89 54 24 40        mov [esp+40],edx          00440FD5 - DEE9               fsubp st(1),st(0) // pos.y -= offs
+    //                                                         00440FD7 - D9 5C 24 3C        fstp dword ptr [esp+3C] // update pos.y
+    //                                                         00440FDB - B9 FAFAFAFA        mov ecx,FAFAFAFA // nop
+    //                                                         00440FE0 - 8B 14 95 14769500  mov edx,[edx*4+00957614]
+    //                                                         00440FE7 - 89 54 24 14        mov [esp+14],edx
+    //                                                         00440FEB - 8B CB              mov ecx,ebx
+    patchBytes(0x00440F90, {
+        0x8B, 0x4C, 0x24, 0x50, 0x89, 0x4C, 0x24, 0x38, 0x99, 0xB9, 0x03, 0x00, 0x00, 0x00,
+        0xF7, 0xF9, 0x8B, 0x44, 0x24, 0x54, 0x89, 0x44, 0x24, 0x3C, 0x8B, 0x44, 0x24, 0x58,
+        0x89, 0x44, 0x24, 0x40, 0xD9, 0x44, 0x24, 0x14, 0xD8, 0x1D, 0x34, 0x5A, 0x8D, 0x00,
+        0xDF, 0xE0, 0xF6, 0xC4, 0x41, 0x74, 0x1A, 0xD9, 0x44, 0x24, 0x3C, 0xD9, 0x05, 0x34,
+        0x5A, 0x8D, 0x00, 0xD9, 0xC0, 0xD8, 0x64, 0x24, 0x14, 0xD9, 0xC9, 0xDE, 0xF9, 0xDE,
+        0xE9, 0xD9, 0x5C, 0x24, 0x3C, 0xB9, 0xFA, 0xFA, 0xFA, 0xFA, 0x8B, 0x14, 0x95, 0x14,
+        0x76, 0x95, 0x00, 0x89, 0x54, 0x24, 0x14, 0x8B, 0xCB
+        });
+}
+
 void patch_WindowWin32__init_hook_for_updating()
 {
     BEGIN_ASM_CODE(a)
@@ -209,6 +250,7 @@ void bfhook_init()
     patch_fix_setting_foregroundlocktimeout();
     patch_disable_cpu_clock_measurement();
     patch_fix_MemoryPool_crash_on_loading();
+    if (g_settings.lowerNametags) patch_lower_nametags_when_close();
 
     patch_WindowWin32__init_hook_for_updating();
 

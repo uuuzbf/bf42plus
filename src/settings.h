@@ -66,6 +66,10 @@ public:
         L"general", L"showVoteInConsole",
         L"; Show who starts a vote or votes in the console",
         0, false };
+    BoolSetting lowerNametags = {
+        L"general", L"lowerNametags",
+        L"; Gradually lower nametags when u get closer to other players",
+        0, true };
 };
 
 extern Settings g_settings;
