@@ -24,7 +24,7 @@ public:
     intptr_t args[11]; // parameters passed to command
 
     // return value description
-    const char* retdesc; // return value type
+    const char* retdesc; // return value type (REQUIRED, set to "void" if there is no return value)
     const char* argdesc[10]; // parameter types
     int argtype[10]; // 0 for strings, -1 otherwise, if -1 setArgFromString is called to convert parameter, 0 is probably broken?
 

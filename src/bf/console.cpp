@@ -229,6 +229,7 @@ public:
         argdesc[1] = "color";
         argtype[0] = -1;
         argtype[1] = -1;
+        retdesc = "void";
         customCommands.push_back(this);
     };
     virtual void setArgFromString(int arg, bfs::string const& value) {
