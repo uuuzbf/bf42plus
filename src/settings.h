@@ -83,6 +83,11 @@ public:
         L"general", L"debugTextColor",
         L"; Sets the color of console.showStats, console.showFPS, etc",
         0, 0xffff00 /*yellow*/};
+    BoolSetting unlockConsole = {
+        L"general", L"unlockConsole",
+        L"; Unlock all console commands",
+        0, false };
+
 };
 
 extern Settings g_settings;

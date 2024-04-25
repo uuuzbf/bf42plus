@@ -295,7 +295,28 @@ public:
         return "";
     };
 };
-ConsoleObjectPlusDebugTextColor commandPlusDebugTextColo;
+ConsoleObjectPlusDebugTextColor commandPlusDebugTextColor;
+
+class ConsoleObjectPlusUnlockConsole : public ConsoleObjectBoolSetting {
+public:
+    ConsoleObjectPlusUnlockConsole() : ConsoleObjectBoolSetting() {
+        functionname = "unlockConsole";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.unlockConsole.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.unlockConsole.value = args[0] != 0;
+            g_settings.unlockConsole.dirty = true;
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusUnlockConsole commandPlusUnlockConsole;
 
 
 void register_custom_console_commands()
