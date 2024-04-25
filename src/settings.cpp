@@ -6,27 +6,53 @@ Settings g_settings;
 
 static const char* CONFIG_FILE = "bf42plus.ini";
 
-inline void StringSetting::load(const CSimpleIni& ini) {
+inline void StringSetting::load(const CSimpleIni& ini)
+{
     value = ini.GetValue(section, name, value.c_str());
 }
 
-inline void StringSetting::save(CSimpleIni& ini) {
+inline void StringSetting::save(CSimpleIni& ini)
+{
     if (dirty) {
         ini.SetValue(section, name, value.c_str(), comment);
         dirty = false;
     }
 }
 
-inline void BoolSetting::load(const CSimpleIni& ini) {
+inline void BoolSetting::load(const CSimpleIni& ini)
+{
     value = ini.GetBoolValue(section, name, value);
 }
 
-inline void BoolSetting::save(CSimpleIni& ini) {
+inline void BoolSetting::save(CSimpleIni& ini)
+{
     if (dirty) {
         // SetBoolValue uses true/false, use SetValue with on/off instead because it's less programmer-y
         // GetBoolValue supports various boolean strings including on/off
         ini.SetValue(section, name, value ? L"on" : L"off", comment);
         dirty = false;
+    }
+}
+
+void ColorSetting::load(const CSimpleIni& ini)
+{
+    auto colorString = ini.GetValue(section, name);
+    if (colorString) {
+        uint32_t color = GetColorFromString(WideStringToASCII(colorString));
+        if (color != InvalidColor) {
+            value = color;
+        }
+        else {
+            // color code in file was invalid, overwrite it with default value
+            dirty = true;
+        }
+    }
+}
+
+void ColorSetting::save(CSimpleIni& ini)
+{
+    if (dirty) {
+        ini.SetValue(section, name, ASCIIToWideString(GetStringFromColor(value)).c_str(), comment);
     }
 }
 
@@ -41,6 +67,8 @@ Settings::Settings()
         &showIDInNametags,
         &showVoteInConsole,
         &lowerNametags,
+        &debugTextColor,
+        &unlockConsole,
     };
 }
 

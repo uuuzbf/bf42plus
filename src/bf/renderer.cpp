@@ -10,6 +10,9 @@ void Renderer::drawDebugText_orig(int x, int y, const bfs::string& str) noexcept
 void Renderer::drawDebugText(int x, int y, const bfs::string& str)
 {
     if (font) {
+        uint32_t origColor = font->getColor();
+        font->setColor(g_settings.debugTextColor | 0xFF000000);
+
         // adjust debug text offsets if the font isn't the default size
         if (font->getHeight() != 11) {
             y = y * font->getHeight() / 11;
@@ -17,7 +20,10 @@ void Renderer::drawDebugText(int x, int y, const bfs::string& str)
         if (font->getCharWidth('W') != 8) {
             x = x * font->getCharWidth('W') / 8;
         }
+
         font->drawText(x, y, str);
+
+        font->setColor(origColor);
     }
     else {
         drawDebugText_orig(x, y, str);

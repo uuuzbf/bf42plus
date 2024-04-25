@@ -32,6 +32,15 @@ struct BoolSetting : public Setting {
     operator bool() const { return value; };
 };
 
+struct ColorSetting : public Setting {
+    uint32_t value;
+    ColorSetting(const wchar_t* section, const wchar_t* name, const wchar_t* comment, int resourceid, uint32_t value) :
+        Setting(section, name, comment, resourceid), value(value) {};
+    virtual void load(const CSimpleIni& ini);
+    virtual void save(CSimpleIni& ini);
+    operator uint32_t() const { return value; };
+};
+
 class Settings {
     CSimpleIni ini;
     std::vector<Setting*> settings;
@@ -70,6 +79,10 @@ public:
         L"general", L"lowerNametags",
         L"; Gradually lower nametags when u get closer to other players",
         0, true };
+    ColorSetting debugTextColor = {
+        L"general", L"debugTextColor",
+        L"; Sets the color of console.showStats, console.showFPS, etc",
+        0, 0xffff00 /*yellow*/};
 };
 
 extern Settings g_settings;

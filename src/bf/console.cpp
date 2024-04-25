@@ -253,6 +253,51 @@ public:
 ConsoleObjectPlusBuddyColor commandPlusBuddyColor;
 
 
+class ConsoleObjectPlusDebugTextColor : public ConsoleObject {
+    uint32_t result;
+public:
+    ConsoleObjectPlusDebugTextColor() {
+        isdynamic = true;
+        type = 0;
+        access = 1;
+        objectname = "plus";
+        functionname = "debugTextColor";
+        minargcount = 0;
+        maxargcount = 1;
+        argdesc[0] = "color";
+        argtype[0] = -1;
+        retdesc = "color";
+        customCommands.push_back(this);
+    };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            args[0] = GetColorFromString(value);
+        }
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void* executeObjectMethod() {
+        if (argcount == 1) {
+            g_settings.debugTextColor.value = args[0];
+            g_settings.debugTextColor.dirty = true;
+            hasreturnvalue = false;
+        }
+        else if (argcount == 0) {
+            result = g_settings.debugTextColor;
+            hasreturnvalue = true;
+            return &result;
+        }
+        return 0;
+    };
+    virtual bfs::string getReturnValueAsString() {
+        if (hasreturnvalue) {
+            return GetStringFromColor(result);
+        }
+        return "";
+    };
+};
+ConsoleObjectPlusDebugTextColor commandPlusDebugTextColo;
+
+
 void register_custom_console_commands()
 {
     ConsoleObjects::getSingleton()->registerConsoleObjects(customCommands);
