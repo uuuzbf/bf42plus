@@ -51,6 +51,7 @@
 #include "bf/gameevent.h"
 #include "bf/ui.h"
 #include "bf/console.h"
+#include "bf/renderer.h"
 
 extern HMODULE g_this_module;
 

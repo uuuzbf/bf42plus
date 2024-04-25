@@ -256,6 +256,7 @@ void bfhook_init()
 
     gameevent_hook_init();
     ui_hook_init();
+    renderer_hook_init();
 
     dynbuffer_make_nonwritable();
 }
