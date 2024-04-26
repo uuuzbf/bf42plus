@@ -64,6 +64,8 @@ struct StringCompareNoCase {
 	bool operator()(const std::string& left, const std::string& right) const { return _stricmp(left.c_str(), right.c_str()) < 0; };
 };
 
+uint8_t crc8(uint8_t* data, size_t length);
+
 //#ifdef _DEBUG
 void debuglog(const char* fmt, ...);
 //#else

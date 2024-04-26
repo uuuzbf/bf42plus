@@ -350,6 +350,18 @@ std::string GetStringFromColor(uint32_t color)
     return std::format("#{:06x}", color & 0xFFFFFF);
 }
 
+uint8_t crc8(uint8_t* data, size_t length)
+{
+    uint8_t crc = 0xff;
+    for (size_t i = 0; i < length; i++) {
+        crc ^= data[i];
+        for (size_t n = 0; n < 8; n++) {
+            crc = (crc & 0x80) ? ((crc << 1) ^ 0x97) : (crc << 1);
+        }
+    }
+    return crc;
+}
+
 //#ifdef _DEBUG
 void debuglog(const char* fmt, ...)
 {

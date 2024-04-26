@@ -245,6 +245,36 @@ void patch_unlock_all_console_commands()
     inject_jmp(0x0059F1CD, 5, (void*)0x0059F27E, 1);
 }
 
+void patch_add_plus_version_to_accept_ack()
+{
+    // This patch adds a marker and the current mod version to the
+    // CONNECT_ACCEPT_ACK packet, so a server can identify Plus clients
+    // This could allow for using extra features only present in these clients.
+    static auto insert_version = LAMBDA_STDCALL(void, (uint8_t * data), {
+        // data[0] will be overwritten with the player id
+        // high 4 bits of data[2] will be overwritten by the packet id (4)
+        // ID XX PX XX XX XX XX XX
+        uint8_t major, minor, patch, build;
+        get_build_version_components(major, minor, patch, build);
+        data[1] = '+';
+        data[2] = 0x40 | (build & 0xF); // set high 4 bits to 4 so the crc will be correct
+        data[3] = major;
+        data[4] = minor;
+        data[5] = patch;
+        data[6] = PLUS_PROTOCOL_VERSION;
+        // last byte is a crc of the previous 6 bytes (1..6)
+        data[7] = crc8(data + 1, 6);
+    });
+    BEGIN_ASM_CODE(a)
+        mov eax, esp // esp points to the 8 byte buffer used for packet data in the function
+        push ecx // save *this
+        push eax
+        mov eax, insert_version
+        call eax
+        pop ecx // restore *this
+    MOVE_CODE_AND_ADD_CODE(a, 0x0060F393, 10, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -265,6 +295,7 @@ void bfhook_init()
     if (g_settings.unlockConsole) patch_unlock_all_console_commands();
 
     patch_WindowWin32__init_hook_for_updating();
+    patch_add_plus_version_to_accept_ack();
 
     gameevent_hook_init();
     ui_hook_init();

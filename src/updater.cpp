@@ -97,6 +97,18 @@ static const wchar_t* get_user_agent()
     return L"BF42Plus/" M_TO_STRING(GIT_VERSION);
 }
 
+void get_build_version_components(uint8_t& major, uint8_t& minor, uint8_t& patch, uint8_t& build)
+{
+    major = minor = patch = build = 0;
+    auto ver = std::stringstream(M_TO_STRING(GIT_VERSION));
+    ver >> major;
+    ver.get(); // skip delimiter
+    ver >> minor;
+    ver.get(); // skip delimiter
+    ver >> patch;
+    ver.get(); // skip delimiter
+    ver >> build;
+}
 
 int compare_version(std::wstring older, std::wstring newer)
 {

@@ -95,9 +95,9 @@ inline void patchBytes(uintptr_t addr, const T& value)
 // only stateless lambdas are supported
 // example: auto ptr = LAMBDA_STDCALL(int, (), { return 4; })
 // ptr is now an int(__stdcall*)() which can be used in __asm blocks too
-#define LAMBDA_CDECL(rettype, args, body)    static_cast<rettype (__cdecl*)args>([]args body)
-#define LAMBDA_STDCALL(rettype, args, body)    static_cast<rettype (__stdcall*) args >([] args body)
-#define LAMBDA_FASTCALL(rettype, args, body)    static_cast<rettype (__fastcall*) args >([] args body)
+#define LAMBDA_CDECL(rettype, args, ...)    static_cast<rettype (__cdecl*)args>([]args __VA_ARGS__)
+#define LAMBDA_STDCALL(rettype, args, ...)    static_cast<rettype (__stdcall*) args >([] args __VA_ARGS__)
+#define LAMBDA_FASTCALL(rettype, args, ...)    static_cast<rettype (__fastcall*) args >([] args __VA_ARGS__)
 
 #endif // #ifdef __cplusplus
 
