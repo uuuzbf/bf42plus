@@ -275,6 +275,15 @@ void patch_add_plus_version_to_accept_ack()
     MOVE_CODE_AND_ADD_CODE(a, 0x0060F393, 10, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+void patch_showFPS_more_precision_on_averages()
+{
+    // On the console.showFPS debug display, on the average fps/frame values (second column),
+    // increase the number of digits after the decimal point to 3
+    const char* fmt = "%.3f";
+    patchBytes(0x00462826 + 1, fmt);
+    patchBytes(0x004628E6 + 1, fmt);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -296,6 +305,7 @@ void bfhook_init()
 
     patch_WindowWin32__init_hook_for_updating();
     patch_add_plus_version_to_accept_ack();
+    patch_showFPS_more_precision_on_averages();
 
     gameevent_hook_init();
     ui_hook_init();
