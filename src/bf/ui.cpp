@@ -68,6 +68,24 @@ __declspec(naked) bool meme::BfMap::addPlayerToBuddyListByID(int playerid) noexc
     _asm jmp eax
 }
 
+__declspec(naked) void BfMenu::showDisconnectMessage(bfs::wstring message) noexcept
+{
+    _asm mov eax, 0x006A7E90
+    _asm jmp eax
+}
+
+__declspec(naked) void BfMenu::hideDisconnectMessage() noexcept
+{
+    _asm mov eax, 0x006A7EE0
+    _asm jmp eax
+}
+
+__declspec(naked) void BfMenu::setInfoMessage(bfs::string message) noexcept
+{
+    _asm mov eax, 0x006A76B0
+    _asm jmp eax
+}
+
 static uintptr_t setServerMessage_addr = 0x006A87D0;
 __declspec(naked) void BfMenu::setServerMessage_orig(bfs::string message) noexcept
 {

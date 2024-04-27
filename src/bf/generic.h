@@ -50,6 +50,7 @@ public:
     virtual bool getIsAIPlayer() const;
     virtual void setCamera(IObject* camera);
     static BFPlayer* __stdcall getFromID(int id);
+    static BFPlayer* getLocal();
 };
 
 template<int B>

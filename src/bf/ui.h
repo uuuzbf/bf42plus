@@ -60,6 +60,9 @@ public:
     void setCenterKillMessage(bfs::wstring message) noexcept;
     void setCenterKillMessage_hook(bfs::wstring message);
     void outputConsole(bfs::string message) noexcept;
+    void showDisconnectMessage(bfs::wstring message) noexcept; // needs testing
+    void hideDisconnectMessage() noexcept;
+    void setInfoMessage(bfs::string message) noexcept; // accepts a locale key, if not found the string is displayed
     void setServerMessage_orig(bfs::string message) noexcept;
     void setServerMessage(bfs::string message);
 

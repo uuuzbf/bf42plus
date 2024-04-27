@@ -16,6 +16,7 @@
 #include <windows.h>
 #include <CommCtrl.h>
 #include <commdlg.h>
+#include <float.h>
 #include <initializer_list>
 #include <string>
 #include <vector>

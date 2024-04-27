@@ -69,6 +69,7 @@ Settings::Settings()
         &lowerNametags,
         &debugTextColor,
         &unlockConsole,
+        &highPrecBlindTest,
     };
 }
 

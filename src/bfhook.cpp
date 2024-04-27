@@ -2,6 +2,9 @@
 
 #pragma warning(disable: 4740)
 
+bool g_highPrecBlindTest = false;
+int g_actionsToDrop = 0;
+
 void patch_Particle_handleUpdate_crash()
 {
     // fix crash when game is minimized
@@ -275,6 +278,38 @@ void patch_add_plus_version_to_accept_ack()
     MOVE_CODE_AND_ADD_CODE(a, 0x0060F393, 10, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+void patch_higher_precision_fpu()
+{
+    // pass D3DCREATE_FPU_PRESERVE to IDirect3D8::CreateDevice
+    // see also https://stackoverflow.com/questions/12707961/switching-fpu-to-single-precision
+    // .text:0063F217 1D4 83 C8 40                          or      eax, 40h      
+    patchBytes(0x0063F217, { 0x83, 0xc8, 0x42 });
+    // .text:0063F0C1 1D4 C7 86 B8 00 00 00+                mov     dword ptr [esi+0B8h], 20h ; ' '
+    // .text:0063F0C1 1D4 20 00 00 00
+    patchBytes(0x0063F0C1, { 0xc7, 0x86, 0xb8, 0, 0, 0, 0x22, 0, 0, 0 });
+
+    // DirectX shouldn't touch the fpu masks now, but it expects all exceptions to be masked
+    // Set some values taken from a working game
+    _control87(
+        _EM_DENORMAL | _EM_INVALID | _EM_ZERODIVIDE | _EM_OVERFLOW | _EM_UNDERFLOW | _EM_INEXACT | // set all exception masks
+        _RC_NEAR | // round near 
+        _PC_53 | // 53 bit precision (MSVCRT default)
+        _IC_PROJECTIVE, // projective infinity control
+        _MCW_EM | _MCW_RC | _MCW_PC | _MCW_IC // change everything
+    );
+}
+
+void patch_drop_actions()
+{
+    BEGIN_ASM_CODE(a)
+        cmp g_actionsToDrop, 0
+        jz cont
+        dec g_actionsToDrop
+        ret 8
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x004904F0, 8, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void patch_showFPS_more_precision_on_averages()
 {
     // On the console.showFPS debug display, on the average fps/frame values (second column),
@@ -302,6 +337,10 @@ void bfhook_init()
     patch_fix_MemoryPool_crash_on_loading();
     if (g_settings.lowerNametags) patch_lower_nametags_when_close();
     if (g_settings.unlockConsole) patch_unlock_all_console_commands();
+    if (g_highPrecBlindTest) {
+        patch_higher_precision_fpu();
+        patch_drop_actions();
+    }
 
     patch_WindowWin32__init_hook_for_updating();
     patch_add_plus_version_to_accept_ack();

@@ -82,12 +82,19 @@ public:
     ColorSetting debugTextColor = {
         L"general", L"debugTextColor",
         L"; Sets the color of console.showStats, console.showFPS, etc",
-        0, 0xffff00 /*yellow*/};
+        0, 0xffff00 /*yellow*/ };
     BoolSetting unlockConsole = {
         L"general", L"unlockConsole",
         L"; Unlock all console commands",
         0, false };
-
+    BoolSetting highPrecBlindTest = {
+        L"general", L"highPrecBlindTest",
+        L"; Enable blind testing of high precision FPU mode.\n"
+        L"; At startup the precision patch may be applied, and on map end\n"
+        L"; it is revealed if it was applied or not. Please report your experiences\n"
+        L"; on the SiMPLE forum or on discord (username uuuzbf).\n"
+        L"; THIS SETTING WILL BE REMOVED IN NEXT VERSIONS",
+        0, false };
 };
 
 extern Settings g_settings;

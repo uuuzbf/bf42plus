@@ -6,6 +6,7 @@ enum GameEventID {
     BF_CreatePlayerEvent = 0x08,
     BF_DestroyPlayerEvent = 0x0C,
     BF_VoteEvent = 0x12,
+    BF_GameStatusEvent = 0x24,
     BF_ChatFragmentEvent = 0x28,
     BF_ScoreMsgEvent = 0x2a,
     BF_DataBaseCompleteEvent = 0x34,
@@ -37,6 +38,14 @@ enum VoteType : uint32_t {
     VT_MAP = 0,
     VT_KICK = 1,
     VT_TEAMKICK = 2,
+};
+
+enum GameStatus : uint8_t {
+    GS_PLAYING = 1,
+    GS_ENDGAME = 2,
+    GS_PREGAME = 3,
+    GS_PAUSED = 4,
+    GS_ENDMAP = 5,
 };
 
 class PacketStatus;
@@ -153,6 +162,14 @@ public:
 };
 
 static_assert(sizeof(VoteEvent) == 0x1D);
+
+class GameStatusEvent : GameEvent {
+public:
+    GameStatus newStatus;
+    char reconnectPassword[5];
+    uint8_t nextMapModnameLength;
+    char nextMapModname[32];
+};
 
 #pragma pack(pop)
 

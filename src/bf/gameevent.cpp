@@ -61,6 +61,15 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                         }
                     }
                     break;
+                case SE_DEATH:
+                case SE_DEATHNOMSG:
+                    if (g_highPrecBlindTest) {
+                        if (ev->playerid == BFPlayer::getLocal()->getId()) {
+                            g_actionsToDrop = 3;
+                            chatMessage("drop actions");
+                        }
+                    }
+                    break;
             }
             break;
         }
@@ -86,6 +95,16 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                         else _snprintf(message, 64, "%s voted", voter->getName().c_str());
                         BfMenu::getSingleton()->outputConsole(message);
                     }
+                }
+            }
+            break;
+        }
+        case BF_GameStatusEvent: {
+            auto ev = reinterpret_cast<GameStatusEvent*>(event);
+            if (ev->newStatus == GS_ENDMAP) {
+                if (g_settings.highPrecBlindTest) {
+                    chatMessage(g_highPrecBlindTest ? "High precision mode was ENABLED" : "High precision mode was DISABLED");
+                    BfMenu::getSingleton()->setCenterKillMessage(g_highPrecBlindTest ? L"High precision mode was ENABLED" : L"High precision mode was DISABLED");
                 }
             }
         }
