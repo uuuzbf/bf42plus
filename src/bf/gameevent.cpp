@@ -66,7 +66,6 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                     if (g_highPrecBlindTest) {
                         if (ev->playerid == BFPlayer::getLocal()->getId()) {
                             g_actionsToDrop = 3;
-                            chatMessage("drop actions");
                         }
                     }
                     break;
