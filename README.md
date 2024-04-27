@@ -8,6 +8,9 @@ Copy `dsound.dll` into your game directory.
 
 _If you already have a modded `dsound.dll` in your game directory, rename it to `dsound_next.dll`, it will keep working!_
 
+#### Support
+If you have any issues with the mod or want to ask for bugfixes or features then you can do it here by opening an issue, in the [SiMPLE forum topic](https://team-simple.org/forum/viewtopic.php?id=10835) or on Discord by messaging me (uuuzbf).
+
 #### Extra steps under Wine
 The mod works under Wine, but by default libraries placed next to executables aren't loaded. To fix this you have to run `winecfg`. On the `Applications` tab add `BF1942.exe`, then on the `Libraries` tab add `dsound` to the dll overrides.
 
