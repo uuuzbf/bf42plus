@@ -1,5 +1,5 @@
 ## Battlefield 1942 client patches
-This mod provides several [fixes](#bugfixes) and [improvements](#improvements) to Battlefield 1942. It also has some [additional features](#optional-features) however these are all disabled by default.
+This mod provides several [fixes](#bugfixes) and [improvements](#improvements) to Battlefield 1942. It also has some [additional features](#optional-features) however these are all disabled by default. It is also possible to [set custom colors](#buddy-colors) for players on the buddy list.
 
 The current version is `1.3.0`. You can see your version in the main menu in the bottom left corner.
 
@@ -24,6 +24,16 @@ The DLL has a builtin updater, so it can replace itself with newer versions. Whe
 
 ### Buddy colors
 You can now assign different colors to buddies by clicking the `ADD BUDDY` button on the scoreboard repeatedly. It cycles between 4 different colors, or if the SHIFT key is pressed it assigns random colors.
+
+Another way to assign colors to buddies is to use the `plus.buddyColor` console command. You can specify colors in `#RRGGBB`, `#RGB` formats or a [webcolor name](https://www.w3schools.com/colors/colors_names.asp).
+
+Some examples:
+- Set player _chicken_ to pink: `plus.buddycolor chicken pink`
+- After adding yourself as a buddy you can set your own color too: `plus.buddycolor yournick green`
+- Don't forget to use quotes if the nickname has spaces: `plus.buddycolor "name with spaces" #ADD8E6`
+
+
+You can also change the buddy colors in `bf42plus.ini` in the `[buddycolors]` section.
 
 ### Bugfixes
 - Fix crash when the game is minimized
