@@ -43,6 +43,7 @@ public:
         }
         return "";
     };
+    void needsRestart() { BfMenu::getSingleton()->outputConsole("This setting only takes effect after the next launch!"); };
 };
 
 class ConsoleObjectPlusShowConnectsInChat : public ConsoleObjectBoolSetting {
@@ -59,6 +60,7 @@ public:
         else if (argcount == 1) {
             g_settings.showConnectsInChat.value = args[0] != 0;
             g_settings.showConnectsInChat.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
         }
         return 0;
@@ -80,6 +82,7 @@ public:
         else if (argcount == 1) {
             g_settings.showIDInChat.value = args[0] != 0;
             g_settings.showIDInChat.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
         }
         return 0;
@@ -101,6 +104,7 @@ public:
         else if (argcount == 1) {
             g_settings.showIDInKills.value = args[0] != 0;
             g_settings.showIDInKills.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
         }
         return 0;
@@ -123,7 +127,9 @@ public:
         else if (argcount == 1) {
             g_settings.showIDInNametags.value = args[0] != 0;
             g_settings.showIDInNametags.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
+            needsRestart();
         }
         return 0;
     };
@@ -145,6 +151,7 @@ public:
         else if (argcount == 1) {
             g_settings.showVoteInConsole.value = args[0] != 0;
             g_settings.showVoteInConsole.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
         }
         return 0;
@@ -167,7 +174,9 @@ public:
         else if (argcount == 1) {
             g_settings.lowerNametags.value = args[0] != 0;
             g_settings.lowerNametags.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
+            needsRestart();
         }
         return 0;
     };
@@ -279,6 +288,7 @@ public:
         if (argcount == 1) {
             g_settings.debugTextColor.value = args[0];
             g_settings.debugTextColor.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
         }
         else if (argcount == 0) {
@@ -311,7 +321,9 @@ public:
         else if (argcount == 1) {
             g_settings.unlockConsole.value = args[0] != 0;
             g_settings.unlockConsole.dirty = true;
+            g_settings.save(false);
             hasreturnvalue = false;
+            needsRestart();
         }
         return 0;
     };
