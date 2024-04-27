@@ -3,6 +3,7 @@
 // the hooked main function initializes all the other hooks, then calls the original main function
 
 #include "pch.h"
+#include <tlhelp32.h>
 
 HMODULE g_this_module;
 typedef int __stdcall WinMain_t(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
@@ -17,7 +18,57 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
     bfhook_init();
 
 #ifndef _DEBUG
-    updater_client_startup();
+    // Do not check for updates on map restarts
+    if(strstr(lpCmdLine, " +reconnectPassword ") == 0) {
+        bool blackscreenFound = false;
+#if 0
+        HWND blackscreenWnd = FindWindow(L"black", L"");
+        if (blackscreenWnd) {
+            DWORD pid;
+            if (GetWindowThreadProcessId(blackscreenWnd, &pid)) {
+                blackscreenFound = true;
+            }
+        }
+#endif
+        // Before running the updater, check if BlackScreen.exe is running (BF1942 is being restarted)
+        // Blocking the startup process while blackscreen is running can cause problems, because it hides
+        // windows and it 
+        HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (h != INVALID_HANDLE_VALUE) {
+            PROCESSENTRY32 pe = {};
+            pe.dwSize = sizeof(PROCESSENTRY32);
+
+            // Find PID of parent process
+            DWORD myPID = GetCurrentProcessId();
+            DWORD parentPID = 0;
+            if (Process32First(h, &pe)) {
+                do {
+                    if (pe.th32ProcessID == myPID) {
+                        parentPID = pe.th32ParentProcessID;
+                        break;
+                    }
+                } while (Process32Next(h, &pe));
+            }
+            // Find name of parent process ID
+            if (parentPID && Process32First(h, &pe)) {
+                do {
+                    if (pe.th32ProcessID == parentPID) {
+                        // Parent is blackscreen.exe?
+                        if (_wcsicmp(pe.szExeFile, L"BlackScreen.exe") == 0) {
+                            blackscreenFound = true;
+                        }
+                        break;
+                    }
+                } while (Process32Next(h, &pe));
+            }
+
+            CloseHandle(h);
+        }
+
+        if (!blackscreenFound) {
+            updater_client_startup();
+        }
+    }
 #endif
 
     register_custom_console_commands();
