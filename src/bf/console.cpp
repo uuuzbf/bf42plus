@@ -330,6 +330,29 @@ public:
 };
 ConsoleObjectPlusUnlockConsole commandPlusUnlockConsole;
 
+class ConsoleObjectPlusHighPrecBlindTest : public ConsoleObjectBoolSetting {
+public:
+    ConsoleObjectPlusHighPrecBlindTest() : ConsoleObjectBoolSetting() {
+        functionname = "highPrecBlindTest";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.unlockConsole.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.highPrecBlindTest.value = args[0] != 0;
+            g_settings.highPrecBlindTest.dirty = true;
+            g_settings.save(false);
+            hasreturnvalue = false;
+            needsRestart();
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusHighPrecBlindTest commandPlusHighPrecBlindTest;
+
 
 void register_custom_console_commands()
 {
