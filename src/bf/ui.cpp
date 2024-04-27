@@ -68,6 +68,13 @@ __declspec(naked) bool meme::BfMap::addPlayerToBuddyListByID(int playerid) noexc
     _asm jmp eax
 }
 
+static uintptr_t setServerMessage_addr = 0x006A87D0;
+__declspec(naked) void BfMenu::setServerMessage_orig(bfs::string message) noexcept
+{
+    _asm mov eax, setServerMessage_addr
+    _asm jmp eax
+}
+
 #pragma warning(pop)
 
 void BfMenu::addPlayerChatMessage_hook(bfs::wstring message, BFPlayer* player, int team)
@@ -163,6 +170,17 @@ void BfMenu::setCenterKillMessage_hook(bfs::wstring message)
     }
 
     setCenterKillMessage(message);
+}
+
+void BfMenu::setServerMessage(bfs::string message)
+{
+    // Originally the server message is output only after it times out.
+    // If another message overwrites it before that, the first message is lost.
+    // Outputting on timeout is disabled with a patch, and the message is
+    // outputted here immediatedly when displayed.
+    outputConsole(message);
+
+    setServerMessage_orig(message);
 }
 
 std::map<std::string, uint32_t, StringCompareNoCase> customBuddyColors;
@@ -395,6 +413,7 @@ void ui_hook_init()
     addPlayerChatMessage_orig = (uintptr_t)hook_function(addPlayerChatMessage_orig, 5, method_to_voidptr(&BfMenu::addPlayerChatMessage_hook));
     setCenterKillMessage_orig = (uintptr_t)hook_function(setCenterKillMessage_orig, 5, method_to_voidptr(&BfMenu::setCenterKillMessage_hook));
     addRadioChatMessage_orig = (uintptr_t)hook_function(addRadioChatMessage_orig, 8, method_to_voidptr(&BfMenu::addRadioChatMessage_hook));
+    setServerMessage_addr = (uintptr_t)hook_function(setServerMessage_addr, 5, method_to_voidptr(&BfMenu::setServerMessage));
 
     isPlayerIDInBuddyList_orig = (uintptr_t)hook_function(isPlayerIDInBuddyList_orig, 6, method_to_voidptr(&meme::BfMap::isPlayerIDInBuddyList_hook));
 
@@ -404,4 +423,7 @@ void ui_hook_init()
     patch_change_scoreboard_buddy_color();
     patch_change_chat_buddy_color();
     patch_hook_scoreboard_add_buddy_button();
+
+    // Disable original server message outputting to console
+    inject_jmp(0x006A88B1, 2, (void*)0x006A88CE, 1);
 }

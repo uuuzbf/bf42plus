@@ -60,6 +60,8 @@ public:
     void setCenterKillMessage(bfs::wstring message) noexcept;
     void setCenterKillMessage_hook(bfs::wstring message);
     void outputConsole(bfs::string message) noexcept;
+    void setServerMessage_orig(bfs::string message) noexcept;
+    void setServerMessage(bfs::string message);
 
 };
 
