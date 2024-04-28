@@ -50,6 +50,7 @@ You can also change the buddy colors in `bf42plus.ini` in the `[buddycolors]` se
 ### Improvements
 - Speed up reconnecting to servers on map change
 - Changing mod when joining a server from the serverlist is faster
+- Nametags are lowered when u get close to other players so you can see it. Can be disabled by adjusting `lowerNametags`
 - `game.showFPS`, `game.showStats`, etc screens are adjusted if you are using a different sized font, the font color is now yellow for better readability and can be changed with `debugTextColor` setting
 - Yellow server messages are immediatedly copied to the console so one isn't lost if it is overwritten by another
 
