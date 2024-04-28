@@ -1,7 +1,7 @@
 ## Battlefield 1942 client patches
 This mod provides several [fixes](#bugfixes) and [improvements](#improvements) to Battlefield 1942. It also has some [additional features](#optional-features) however these are all disabled by default. It is also possible to [set custom colors](#buddy-colors) for players on the buddy list.
 
-The current version is `1.3.1`. You can see your version in the main menu in the bottom left corner.
+The current version is `1.3.2`. You can see your version in the main menu in the bottom left corner.
 
 ### Installation
 Copy `dsound.dll` into your game directory.
