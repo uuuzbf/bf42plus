@@ -52,7 +52,7 @@ public:
     // Buddy colors are stored in a separate [buddycolors] section.
     // If color is set to InvalidColor, the entry is removed for the given player name.
     void setBuddyColor(std::wstring name, uint32_t color) {
-        if (color != InvalidColor) ini.SetValue(L"buddycolors", name.c_str(), ASCIIToWideString(GetStringFromColor(color)).c_str());
+        if (color != InvalidColor) ini.SetValue(L"buddycolors", name.c_str(), ISO88591ToWideString(GetStringFromColor(color)).c_str());
         else ini.Delete(L"buddycolors", name.c_str(), false);
     };
     BoolSetting showConnectsInChat = {

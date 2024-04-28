@@ -210,7 +210,7 @@ void setBuddyColor(std::string name, uint32_t color)
         customBuddyColors.erase(name);
         color = InvalidColor;
     }
-    g_settings.setBuddyColor(ASCIIToWideString(name), color);
+    g_settings.setBuddyColor(ISO88591ToWideString(name), color);
     g_settings.save(false);
 }
 

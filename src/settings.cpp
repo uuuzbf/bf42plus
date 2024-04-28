@@ -38,7 +38,7 @@ void ColorSetting::load(const CSimpleIni& ini)
 {
     auto colorString = ini.GetValue(section, name);
     if (colorString) {
-        uint32_t color = GetColorFromString(WideStringToASCII(colorString));
+        uint32_t color = GetColorFromString(WideStringToISO88591(colorString));
         if (color != InvalidColor) {
             value = color;
         }
@@ -52,7 +52,7 @@ void ColorSetting::load(const CSimpleIni& ini)
 void ColorSetting::save(CSimpleIni& ini)
 {
     if (dirty) {
-        ini.SetValue(section, name, ASCIIToWideString(GetStringFromColor(value)).c_str(), comment);
+        ini.SetValue(section, name, ISO88591ToWideString(GetStringFromColor(value)).c_str(), comment);
     }
 }
 
@@ -111,9 +111,10 @@ bool Settings::load()
         CSimpleIni::TNamesDepend names;
         if (ini.GetAllKeys(L"buddycolors", names)) {
             for (auto& name : names) {
-                uint32_t color = GetColorFromString(WideStringToASCII(ini.GetValue(L"buddycolors", name.pItem, L"")));
+                uint32_t color = GetColorFromString(WideStringToISO88591(ini.GetValue(L"buddycolors", name.pItem, L"")));
                 if (color != InvalidColor) {
-                    ::setBuddyColor(WideStringToASCII(name.pItem), color);
+                    debuglog("buddycolor: loaded %ls color %06X\n", name.pItem, color);
+                    ::setBuddyColor(WideStringToISO88591(name.pItem), color);
                 }
                 else {
                     debuglog("buddycolor: '%ls' invalid in config, ignoring\n", name.pItem);

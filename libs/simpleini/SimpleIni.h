@@ -1274,6 +1274,7 @@ private:
     bool IsMultiLineTag(const SI_CHAR * a_pData) const;
     bool IsMultiLineData(const SI_CHAR * a_pData) const;
     bool IsSingleLineQuotedValue(const SI_CHAR* a_pData) const;
+    bool IsQuotedKey(const SI_CHAR* a_pData) const;
     bool LoadMultiLineText(
         SI_CHAR *&          a_pData,
         const SI_CHAR *&    a_pVal,
@@ -1674,8 +1675,21 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::FindEntry(
             return true;
         }
 
-        // find the end of the key name (it may contain spaces)
         a_pKey = a_pData;
+        // when keys are quoted make sure the whole key is loaded
+        if (m_bParseQuotes && *a_pData == '"') {
+            while (*(++a_pData) != '"') {
+                if (!*a_pData || IsNewLineChar(*a_pData)) {
+                    // key missing trailing quote, invalid
+                    break;
+                }
+            }
+            if (*a_pData != '"') {
+                // invalid key, skip the line
+                continue;
+            }
+        }
+        // find the end of the key name (it may contain spaces)
         while (*a_pData && *a_pData != '=' && !IsNewLineChar(*a_pData)) {
             ++a_pData;
         }
@@ -1689,6 +1703,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::FindEntry(
 
         // empty keys are invalid
         if (bHaveValue && a_pKey == a_pData) {
+            // skip the line
             while (*a_pData && !IsNewLineChar(*a_pData)) {
                 ++a_pData;
             }
@@ -1698,6 +1713,11 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::FindEntry(
         // remove trailing spaces from the key
         pTrail = a_pData - 1;
         while (pTrail >= a_pKey && IsSpace(*pTrail)) {
+            --pTrail;
+        }
+        // parse quoted key
+        if (m_bParseQuotes && *a_pKey == '"' && *pTrail == '"') {
+            ++a_pKey;
             --pTrail;
         }
         ++pTrail;
@@ -1833,6 +1853,46 @@ CSimpleIniTempl<SI_CHAR, SI_STRLESS, SI_CONVERTER>::IsSingleLineQuotedValue(
     while (*a_pData) {
         if (IsNewLineChar(*a_pData)) {
             return false;
+        }
+        ++a_pData;
+    }
+
+    // check for suffix
+    if (IsSpace(*--a_pData)) {
+        return true;
+    }
+
+    return false;
+}
+
+template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
+bool
+CSimpleIniTempl<SI_CHAR, SI_STRLESS, SI_CONVERTER>::IsQuotedKey(
+    const SI_CHAR* a_pData
+) const
+{
+    // keys need to be quoted if they start with [ or have leading or trailing
+    // whitespace, or contain a =
+
+    // empty string
+    if (!*a_pData) {
+        return false;
+    }
+
+    // check for [ as first character
+    if (*a_pData == '[') {
+        return true;
+    }
+
+    // check for prefix
+    if (IsSpace(*a_pData)) {
+        return true;
+    }
+
+    // embedded equal signs
+    while (*a_pData) {
+        if (*a_pData == '=') {
+            return true;
         }
         ++a_pData;
     }
@@ -2652,7 +2712,15 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Save(
                 if (!convert.ConvertToStore(iKey->pItem)) {
                     return SI_FAIL;
                 }
-                a_oOutput.Write(convert.Data());
+                // check if key needs to be escaped
+                if (m_bParseQuotes && IsQuotedKey(iKey->pItem)) {
+                    a_oOutput.Write("\"");
+                    a_oOutput.Write(convert.Data());
+                    a_oOutput.Write("\"");
+                }
+                else {
+                    a_oOutput.Write(convert.Data());
+                }
 
                 // write the value as long 
                 if (*iValue->pItem || !m_bAllowKeyOnly) {

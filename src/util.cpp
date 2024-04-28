@@ -194,26 +194,26 @@ std::wstring UTF8ToWideString(const char* s, size_t len)
     return result;
 }
 
-std::string WideStringToASCII(std::wstring s)
+std::string WideStringToISO88591(std::wstring s)
 {
     std::string result;
     result.resize(s.size());
     size_t i = 0;
     for (auto c = s.cbegin(); c != s.cend(); c++) {
-        if (*c < 128) result[i++] = (char)*c;
+        if (*c < 256 && *c >= 0) result[i++] = (char)*c;
         else result[i++] = '?';
     }
     return result;
 }
 
-std::wstring ASCIIToWideString(const std::string& s)
+std::wstring ISO88591ToWideString(const std::string& s)
 {
     std::wstring result;
     result.resize(s.size());
     size_t i = 0;
     for (auto c = s.cbegin(); c != s.cend(); c++) {
-        if (*c < 128) result[i++] = (wchar_t)*c;
-        else result[i++] = '?';
+        // make sure char is casted to unsigned before it is casted to wide char
+        result[i++] = (wchar_t)(uint8_t)*c;
     }
     return result;
 }

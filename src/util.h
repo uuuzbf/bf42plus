@@ -47,10 +47,11 @@ inline std::wstring& replaceAll(std::wstring& str, const std::wstring& oldstr, c
 }
 
 std::wstring UTF8ToWideString(const char* s, size_t len);
-// this function only converts ASCII characters
-std::string	WideStringToASCII(std::wstring s);
-// this function only converts ASCII characters
-std::wstring ASCIIToWideString(const std::string& s);
+// This function converts from wide strings to ISO 8859-1 (what the game uses)
+// Unknown characters are replaced with "?"
+std::string	WideStringToISO88591(std::wstring s);
+// This function converts from ISO 8859-1 (what the game uses) to wide strings
+std::wstring ISO88591ToWideString(const std::string& s);
 bool HexStringToData(const std::wstring& str, std::vector<unsigned char>& data);
 bool HexDataToData(const std::vector<char>& hex, size_t offset, size_t length, std::vector<unsigned char>& data);
 
