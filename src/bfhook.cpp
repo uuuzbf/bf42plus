@@ -249,7 +249,7 @@ void patch_add_plus_version_to_accept_ack()
         uint8_t major, minor, patch, build;
         get_build_version_components(major, minor, patch, build);
         data[1] = '+';
-        data[2] = 0x40 | (build & 0xF); // set high 4 bits to 4 so the crc will be correct
+        data[2] = 0x40 | ((build > 15 ? 15 : build) & 0xF); // set high 4 bits to 4 so the crc will be correct
         data[3] = major;
         data[4] = minor;
         data[5] = patch;
