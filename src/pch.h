@@ -41,7 +41,6 @@
 #include "../res/resource.h"
 
 #include "util.h"
-#include "settings.h"
 #include "updater.h"
 #include "hooks.h"
 #include "bfhook.h"
@@ -53,6 +52,8 @@
 #include "bf/ui.h"
 #include "bf/console.h"
 #include "bf/renderer.h"
+
+#include "settings.h"
 
 extern HMODULE g_this_module;
 

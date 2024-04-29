@@ -350,6 +350,22 @@ std::string GetStringFromColor(uint32_t color)
     return std::format("#{:06x}", color & 0xFFFFFF);
 }
 
+std::string GetStringFromColors(std::vector<uint32_t>& colors)
+{
+    auto s = std::stringstream();
+    bool first = true;
+    for (auto& color : colors) {
+        if (first) {
+            first = false;
+        }
+        else {
+            s << ' ';
+        }
+        s << GetStringFromColor(color);
+    }
+    return s.str();
+}
+
 uint8_t crc8(uint8_t* data, size_t length)
 {
     uint8_t crc = 0xff;

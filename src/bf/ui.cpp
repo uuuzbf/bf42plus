@@ -268,17 +268,20 @@ void meme::BfMap::onAddBuddyButtonClicked(int selectedPlayerid)
     else {
         // player is already a buddy
         uint32_t newcolor;
-        if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) {
+        if (GetAsyncKeyState(VK_LSHIFT) & 0x8000 || g_settings.presetBuddyColors.value.empty()) {
             // if shift is pressed while add buddy button is clicked, assign a random color to the selected buddy
             newcolor = randombytes_random() & 0xffffff;
         }
         else {
-            // cycle between some predefined colors
-            // 0x15a855 /*better green*/
-            static const auto predefined_colors = std::to_array<uint32_t>({ DefaultBuddyColor /*lime*/, 0x1e90ff /*dodgerblue*/, 0xffff00 /*yellow*/, 0x8a2be2 /*blueviolet*/});
+            // get the color from the higher bits of res
             uint32_t color = res >> 8;
+
+            // cycle between some predefined colors
+            const auto& predefined_colors = g_settings.presetBuddyColors.value;
+
+            // pick the next color in the predefined colors
+            // if no color is found, use the first in the list
             auto current = std::find(predefined_colors.begin(), predefined_colors.end(), color);
-            // current may point to .end() but that works too
             if (current == predefined_colors.end()) newcolor = predefined_colors[0];
             else newcolor = predefined_colors[(std::distance(predefined_colors.begin(), current) + 1) % predefined_colors.size()];
         }

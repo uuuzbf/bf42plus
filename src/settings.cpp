@@ -56,6 +56,39 @@ void ColorSetting::save(CSimpleIni& ini)
     }
 }
 
+void ColorListSetting::load(const CSimpleIni& ini)
+{
+    auto rawValue = ini.GetValue(section, name);
+    if (rawValue) {
+        auto s = std::stringstream(WideStringToISO88591(rawValue));
+        std::vector<uint32_t> newColors;
+        for (std::string colorstring; std::getline(s, colorstring, ' ');) {
+            uint32_t color = GetColorFromString(colorstring);
+            if (color != InvalidColor) {
+                newColors.push_back(color);
+            }
+            else {
+                // had to skip some invalid color, rewrite setting
+                dirty = true;
+            }
+        }
+        if (newColors.size() > 0) {
+            value = newColors;
+        }
+        else {
+            // did not parse any colors from file, reset to defaults
+            dirty = true;
+        }
+    }
+}
+
+void ColorListSetting::save(CSimpleIni& ini)
+{
+    if (dirty) {
+        ini.SetValue(section, name, ISO88591ToWideString(GetStringFromColors(value)).c_str(), comment);
+    }
+}
+
 Settings::Settings()
 {
     ini.SetQuotes(true);
@@ -70,6 +103,7 @@ Settings::Settings()
         &debugTextColor,
         &unlockConsole,
         &highPrecBlindTest,
+        &presetBuddyColors,
     };
 }
 

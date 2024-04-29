@@ -354,6 +354,68 @@ public:
 ConsoleObjectPlusHighPrecBlindTest commandPlusHighPrecBlindTest;
 
 
+class ConsoleObjectPlusPresetBuddyColors : public ConsoleObject {
+    std::vector<uint32_t> colors;
+    bool invalid = false;
+public:
+    ConsoleObjectPlusPresetBuddyColors() {
+        isdynamic = true;
+        type = 0;
+        access = 1;
+        objectname = "plus";
+        functionname = "presetBuddyColors";
+        minargcount = 0;
+        maxargcount = 10;
+        for (int i = 0; i < 10; i++) {
+            argdesc[i] = "color";
+            argtype[i] = -1;
+        }
+        retdesc = "colors";
+        customCommands.push_back(this);
+    };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            invalid = false;
+            colors.clear();
+        }
+        else if (invalid) return;
+
+        uint32_t color = GetColorFromString(value);
+        if (color == InvalidColor) invalid = true;
+        colors.push_back(color);
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            colors = g_settings.presetBuddyColors.value;
+            hasreturnvalue = true;
+            return &colors;
+        }
+        else {
+            if (!invalid) {
+                // use whatever was parsed into the colors vector
+                g_settings.presetBuddyColors.value = colors;
+                g_settings.presetBuddyColors.dirty = true;
+                g_settings.save(false);
+            }
+            else {
+                // invalid color specified
+                BfMenu::getSingleton()->outputConsole(std::format("color {} is invalid", colors.size()));
+            }
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+    virtual bfs::string getReturnValueAsString() {
+        if (hasreturnvalue) {
+            return GetStringFromColors(colors);
+        }
+        return "";
+    };
+};
+ConsoleObjectPlusPresetBuddyColors commandPlusPresetBuddyColors;
+
+
 void register_custom_console_commands()
 {
     ConsoleObjects::getSingleton()->registerConsoleObjects(customCommands);

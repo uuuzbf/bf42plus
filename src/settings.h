@@ -41,6 +41,15 @@ struct ColorSetting : public Setting {
     operator uint32_t() const { return value; };
 };
 
+// space separated list of colors
+struct ColorListSetting : public Setting {
+    std::vector<uint32_t> value;
+    ColorListSetting(const wchar_t* section, const wchar_t* name, const wchar_t* comment, int resourceid, std::initializer_list<uint32_t> values) :
+        Setting(section, name, comment, resourceid), value(values) {};
+    virtual void load(const CSimpleIni& ini);
+    virtual void save(CSimpleIni& ini);
+};
+
 class Settings {
     CSimpleIni ini;
     std::vector<Setting*> settings;
@@ -95,6 +104,10 @@ public:
         L"; on the SiMPLE forum or on discord (username uuuzbf).\n"
         L"; THIS SETTING WILL BE REMOVED IN NEXT VERSIONS",
         0, false };
+    ColorListSetting presetBuddyColors = {
+        L"general", L"presetBuddyColors",
+        L"; Sets the colors chosen when the ADD BUDDY button is repeatedly clicked on the scoreboard",
+        0, { DefaultBuddyColor /*lime*/, 0x1e90ff /*dodgerblue*/, 0xffff00 /*yellow*/, 0x8a2be2 /*blueviolet*/} };
 };
 
 extern Settings g_settings;
