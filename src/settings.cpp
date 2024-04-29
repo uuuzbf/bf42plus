@@ -153,7 +153,6 @@ bool Settings::load()
             for (auto& name : names) {
                 uint32_t color = GetColorFromString(WideStringToISO88591(ini.GetValue(L"buddycolors", name.pItem, L"")));
                 if (color != InvalidColor) {
-                    debuglog("buddycolor: loaded %ls color %06X\n", name.pItem, color);
                     ::setBuddyColor(WideStringToISO88591(name.pItem), color);
                 }
                 else {

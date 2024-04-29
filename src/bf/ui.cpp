@@ -205,6 +205,12 @@ std::map<std::string, uint32_t, StringCompareNoCase> customBuddyColors;
 
 void setBuddyColor(std::string name, uint32_t color)
 {
+    // SimpleIni can't handle quotes in keys
+    if (name.find('"') != std::string::npos) {
+        chatMessage("Cannot set color for players with \" in their name :(");
+        return;
+    }
+
     if (color != InvalidColor && color != DefaultBuddyColor) customBuddyColors[name] = color;
     else {
         customBuddyColors.erase(name);
