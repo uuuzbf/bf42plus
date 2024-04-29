@@ -104,6 +104,14 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                 if (g_settings.highPrecBlindTest) {
                     chatMessage(g_highPrecBlindTest ? "High precision mode was ENABLED" : "High precision mode was DISABLED");
                     BfMenu::getSingleton()->setCenterKillMessage(g_highPrecBlindTest ? L"High precision mode was ENABLED" : L"High precision mode was DISABLED");
+                    auto players = BFPlayer::getPlayers();
+                    if (players) {
+                        for (auto it = players->begin(); it != players->end(); ++it) {
+                            std::string name = (*it)->getName();
+                            name.append(g_highPrecBlindTest ? "*ENABLED" : "*DISABLED");
+                            (*it)->setName(name);
+                        }
+                    }
                 }
             }
         }

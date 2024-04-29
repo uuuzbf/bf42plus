@@ -49,8 +49,10 @@ public:
     virtual void setIsAIPlayer();
     virtual bool getIsAIPlayer() const;
     virtual void setCamera(IObject* camera);
+    // these belong in PlayerManager
     static BFPlayer* __stdcall getFromID(int id);
     static BFPlayer* getLocal();
+    static bfs::list<BFPlayer*>* getPlayers();
 };
 
 template<int B>

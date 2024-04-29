@@ -30,6 +30,19 @@ __declspec(naked )BFPlayer* BFPlayer::getLocal()
     }
 }
 
+__declspec(naked) bfs::list<BFPlayer*>* BFPlayer::getPlayers()
+{
+    __asm {
+        mov ecx, 0x0097D76C // pPlayerManager
+        mov eax, [ecx]
+        test eax, eax
+        jz return
+        add eax,0xC // PlayerManager->playerList
+    return:
+        ret
+    }
+}
+
 __declspec(naked) uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str)
 {
     _asm mov eax, 0x00502E60

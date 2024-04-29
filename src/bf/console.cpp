@@ -416,6 +416,42 @@ public:
 ConsoleObjectPlusPresetBuddyColors commandPlusPresetBuddyColors;
 
 
+class ConsoleObjectPlusTestStatus : public ConsoleObject {
+    bfs::string result;
+public:
+    ConsoleObjectPlusTestStatus() {
+        isdynamic = true;
+        type = 0;
+        access = 1;
+        objectname = "plus";
+        functionname = "testStatus";
+        minargcount = 0;
+        maxargcount = 0;
+        retdesc = "std::string";
+        customCommands.push_back(this);
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void* executeObjectMethod() {
+        if (!g_settings.highPrecBlindTest) {
+            result = "You did not enable blind testing.";
+        }
+        else {
+            result = g_highPrecBlindTest ? "Patches are ENABLED" : "Patches are DISABLED";
+        }
+        hasreturnvalue = true;
+        return 0;
+    };
+    virtual bfs::string getReturnValueAsString() {
+        if (hasreturnvalue) {
+            return result;
+        }
+        return "";
+    };
+};
+ConsoleObjectPlusTestStatus commandPlusTestStatus;
+
+
+
 void register_custom_console_commands()
 {
     ConsoleObjects::getSingleton()->registerConsoleObjects(customCommands);
