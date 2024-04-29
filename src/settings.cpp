@@ -118,6 +118,13 @@ bool Settings::load()
     }
 
     bool needToSaveNewSettings = false;
+
+    // remove deleted option
+    if (ini.KeyExists(L"general", L"unlockConsole")) {
+        ini.Delete(L"general", L"unlockConsole", false);
+        needToSaveNewSettings = true;
+    }
+
     for (auto& setting : settings) {
         // if the setting exists in the config file, load it
         if (ini.KeyExists(setting->section, setting->name)) {
