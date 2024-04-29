@@ -1,7 +1,7 @@
 ## Battlefield 1942 client patches
 This mod provides several [fixes](#bugfixes) and [improvements](#improvements) to Battlefield 1942. It also has some [additional features](#optional-features) however these are all disabled by default. It is also possible to [set custom colors](#buddy-colors) for players on the buddy list.
 
-The current version is `1.3.2`. You can see your version in the main menu in the bottom left corner.
+The current version is `1.3.3`. You can see your version in the main menu in the bottom left corner.
 
 ### Installation
 Copy `dsound.dll` into your game directory.
@@ -25,7 +25,7 @@ The DLL has a builtin updater, so it can replace itself with newer versions. Whe
 ### Buddy colors
 You can now assign different colors to buddies by clicking the `ADD BUDDY` button on the scoreboard repeatedly. It cycles between 4 different colors, or if the SHIFT key is pressed it assigns random colors.
 
-Another way to assign colors to buddies is to use the `plus.buddyColor` console command. You can specify colors in `#RRGGBB`, `#RGB` formats or a [webcolor name](https://www.w3schools.com/colors/colors_names.asp).
+Another way to assign colors to buddies is to use the `plus.buddyColor`  command. You can specify colors in `#RRGGBB`, `#RGB` formats or a [webcolor name](https://www.w3schools.com/colors/colors_names.asp).
 
 Some examples:
 - Set player _chicken_ to pink: `plus.buddycolor chicken pink`
@@ -70,9 +70,10 @@ These features are disabled by default. Edit `bf42plus.ini` in the game director
 - Better screenshots: timestamp in filename, png or jpg files, different save location(?)
 - Customizing ID display in chat and nametags
 - Improve windowed mode
+- Chat/kill logging to file
 
 ### Experiment
-Version 1.3.0 has a few optional (disabled by default!) patches, which may improve overall gameplay experience, however it needs more testing. When it is enabled the game applies the patches with a 50% chance on startup. When a multiplayer map ends it is revealed wether it was enabled or not via a message in the chat and on the middle death message. This way one can form an opinion about gameplay experience before knowing if the patches are active or not.
+Version 1.3.0 has a few optional (disabled by default!) patches, which may improve overall gameplay experience, however it needs more testing. When it is enabled the game applies the patches with a 50% chance on startup. When a multiplayer map ends it is revealed wether it was enabled or not via a message in the chat and on the middle death message, also in the player names. This way one can form an opinion about gameplay experience before knowing if the patches are active or not.
 
 To enable this blind test mode with the patches, change the setting `highPrecBlindTest` in the config to `on` (or `plus.highPrecBlindTest 1` in the console, then restart). This config option will be removed in the next version when the test ends. The patches may become default enabled or disabled depending on how the tests go.
 
