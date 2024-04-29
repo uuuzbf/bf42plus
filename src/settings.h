@@ -92,10 +92,6 @@ public:
         L"general", L"debugTextColor",
         L"; Sets the color of console.showStats, console.showFPS, etc",
         0, 0xffff00 /*yellow*/ };
-    BoolSetting unlockConsole = {
-        L"general", L"unlockConsole",
-        L"; Unlock all console commands",
-        0, false };
     BoolSetting highPrecBlindTest = {
         L"general", L"highPrecBlindTest",
         L"; Enable blind testing of high precision FPU mode.\n"

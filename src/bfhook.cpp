@@ -237,17 +237,6 @@ void patch_WindowWin32__init_hook_for_updating()
     MOVE_CODE_AND_ADD_CODE(a, 0x00632478, 9, HOOK_ADD_ORIGINAL_AFTER);
 }
 
-void patch_unlock_all_console_commands()
-{
-    // disable access level check for console autocompletion
-    patchBytes(0x005A066E, { 0xeb, 0x0f });
-    // disable consoleobject active and access check
-    //.text:0059F1CD A98 8B 45 00                          mov     eax, [ebp+0]
-    //.text:0059F1D0 A98 8B CD                             mov     ecx, ebp
-    // jump to 0059F27E
-    inject_jmp(0x0059F1CD, 5, (void*)0x0059F27E, 1);
-}
-
 void patch_add_plus_version_to_accept_ack()
 {
     // This patch adds a marker and the current mod version to the
@@ -336,7 +325,6 @@ void bfhook_init()
     patch_disable_cpu_clock_measurement();
     patch_fix_MemoryPool_crash_on_loading();
     if (g_settings.lowerNametags) patch_lower_nametags_when_close();
-    if (g_settings.unlockConsole) patch_unlock_all_console_commands();
     if (g_highPrecBlindTest) {
         patch_higher_precision_fpu();
         patch_drop_actions();

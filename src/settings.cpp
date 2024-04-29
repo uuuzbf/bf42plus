@@ -101,7 +101,6 @@ Settings::Settings()
         &showVoteInConsole,
         &lowerNametags,
         &debugTextColor,
-        &unlockConsole,
         &highPrecBlindTest,
         &presetBuddyColors,
     };

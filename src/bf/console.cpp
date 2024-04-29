@@ -307,29 +307,6 @@ public:
 };
 ConsoleObjectPlusDebugTextColor commandPlusDebugTextColor;
 
-class ConsoleObjectPlusUnlockConsole : public ConsoleObjectBoolSetting {
-public:
-    ConsoleObjectPlusUnlockConsole() : ConsoleObjectBoolSetting() {
-        functionname = "unlockConsole";
-    };
-    virtual void* executeObjectMethod() {
-        if (argcount == 0) {
-            result = g_settings.unlockConsole.value;
-            hasreturnvalue = true;
-            return &result;
-        }
-        else if (argcount == 1) {
-            g_settings.unlockConsole.value = args[0] != 0;
-            g_settings.unlockConsole.dirty = true;
-            g_settings.save(false);
-            hasreturnvalue = false;
-            needsRestart();
-        }
-        return 0;
-    };
-};
-ConsoleObjectPlusUnlockConsole commandPlusUnlockConsole;
-
 class ConsoleObjectPlusHighPrecBlindTest : public ConsoleObjectBoolSetting {
 public:
     ConsoleObjectPlusHighPrecBlindTest() : ConsoleObjectBoolSetting() {
@@ -337,7 +314,7 @@ public:
     };
     virtual void* executeObjectMethod() {
         if (argcount == 0) {
-            result = g_settings.unlockConsole.value;
+            result = g_settings.highPrecBlindTest.value;
             hasreturnvalue = true;
             return &result;
         }
