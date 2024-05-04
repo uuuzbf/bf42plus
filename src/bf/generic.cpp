@@ -48,3 +48,44 @@ __declspec(naked) uint32_t __fastcall calcStringHashValueNoCase(const bfs::strin
     _asm mov eax, 0x00502E60
     _asm jmp eax
 }
+
+static uintptr_t addPlayerInput_addr = 0x0040ECB0;
+__declspec(naked) void Game::addPlayerInput_orig(int playerid, PlayerInput* input) noexcept
+{
+    _asm mov eax, addPlayerInput_addr
+    _asm jmp eax
+}
+
+void Game::addPlayerInput_hook(int playerid, PlayerInput* input)
+{
+    // input can be modified here, the object will not be used after this function returns
+
+    // The following is a fix for the issue that when stainding on-foot, the mouse
+    // sensitivity is half compared to when you are moving. This is caused by some bug
+    // in BFSoldier::handlePlayerInput, but fixing it there would cause desync when playing
+    // on servers (because the server code has the same bug). This workaround doubles the
+    // LookX sensitivity when the player is not moving (forward and strafe inputs are 0).
+    // This should be better than halving when moving, because decreasing sensitivity
+    // should always be possible, increasing it may not be.
+    if (g_settings.correctedLookSensitivity) {
+        auto localPlayer = BFPlayer::getLocal();
+        if (localPlayer && localPlayer->getId() == playerid) {
+            auto vehicle = localPlayer->getVehicle();
+            // is player in BFSoldier?
+            if (vehicle && vehicle->getTemplate()->getClassID() == CID_BFSoldierTemplate) {
+                // not moving? (forward and strafe are 0)
+                if (input->controls[3] == 0.0 || input->controls[0]) {
+                    // double look left/right sensitivity
+                    input->controls[4] *= 2;
+                }
+            }
+        }
+    }
+
+    addPlayerInput_orig(playerid, input);
+}
+
+void generic_hook_init()
+{
+    addPlayerInput_addr = (uintptr_t)hook_function(addPlayerInput_addr, 8, method_to_voidptr(&Game::addPlayerInput_hook));
+}

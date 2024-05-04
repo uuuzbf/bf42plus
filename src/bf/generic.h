@@ -2,6 +2,10 @@
 #include <cstdint>
 #include <string>
 
+enum ClassID {
+    CID_BFSoldierTemplate = 0x9493
+};
+
 class IBase {
 public:
     virtual void addRef() = 0;
@@ -16,7 +20,6 @@ public:
 
 class IObject;
 class BitStream;
-struct PlayerInput;
 
 struct Vec2 {
     float x, y;
@@ -25,6 +28,24 @@ struct Vec2 {
 class Vec3;
 typedef Vec3 Pos3;
 class Mat4; // BaseMatrix4<float>
+
+struct PlayerInput {
+    float controls[55];
+    uint64_t mask;
+    int unk1;
+    int unk2;
+};
+
+static_assert(sizeof(PlayerInput) == 0xF0);
+
+class Game : public IBase {
+public:
+    // missing virtual methods here
+
+    void addPlayerInput_orig(int playerid, PlayerInput* input) noexcept;
+    void addPlayerInput_hook(int playerid, PlayerInput* input);
+};
+
 
 class BFPlayer : public IBase {
 public:
@@ -87,3 +108,6 @@ public:
 };
 
 uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str);
+
+
+void generic_hook_init();

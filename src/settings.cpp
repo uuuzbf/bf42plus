@@ -103,6 +103,7 @@ Settings::Settings()
         &debugTextColor,
         &highPrecBlindTest,
         &presetBuddyColors,
+        &correctedLookSensitivity,
     };
 }
 

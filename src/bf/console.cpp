@@ -427,6 +427,28 @@ public:
 };
 ConsoleObjectPlusTestStatus commandPlusTestStatus;
 
+class ConsoleObjectPlusCorrectedLookSensitivity : public ConsoleObjectBoolSetting {
+public:
+    ConsoleObjectPlusCorrectedLookSensitivity() : ConsoleObjectBoolSetting() {
+        functionname = "correctedLookSensitivity";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.correctedLookSensitivity.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.correctedLookSensitivity.value = args[0] != 0;
+            g_settings.correctedLookSensitivity.dirty = true;
+            g_settings.save(false);
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusCorrectedLookSensitivity commandPlusCorrectedLookSensitivity;
+
 
 
 void register_custom_console_commands()

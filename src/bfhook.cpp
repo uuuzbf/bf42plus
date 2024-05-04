@@ -334,6 +334,7 @@ void bfhook_init()
     patch_add_plus_version_to_accept_ack();
     patch_showFPS_more_precision_on_averages();
 
+    generic_hook_init();
     gameevent_hook_init();
     ui_hook_init();
     renderer_hook_init();
