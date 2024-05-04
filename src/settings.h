@@ -106,9 +106,9 @@ public:
         0, { DefaultBuddyColor /*lime*/, 0x1e90ff /*dodgerblue*/, 0xffff00 /*yellow*/, 0x8a2be2 /*blueviolet*/} };
     BoolSetting correctedLookSensitivity = {
         L"general", L"correctedLookSensitivity",
-        L"; The game has lower look left/right sensitivity when you are on-foot and not moving\n"
+        L"; The game has higher look left/right sensitivity when you are on-foot and moving\n"
         L"; This option enables a workaround that makes the on-foot sensitivity to always be the same\n"
-        L"; WARNING: Enabling this may feel unusual because of the increased sensitivity!",
+        L"; WARNING: Enabling this may feel unusual because of the decreased sensitivity!",
         0, false };
 };
 
