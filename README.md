@@ -8,6 +8,11 @@ Copy `dsound.dll` into your game directory.
 
 _If you already have a modded `dsound.dll` in your game directory, rename it to `dsound_next.dll`, it will keep working!_
 
+#### Missing MSVCP140.dll error
+If you get an error about missing MSVCP140.dll, install one of the following packages from Microsoft:
+- For 64 bit Windows: https://aka.ms/vs/17/release/vc_redist.x64.exe
+- For 32 bit Windows: https://aka.ms/vs/17/release/vc_redist.x86.exe
+
 #### Extra steps under Wine
 The mod works under Wine, but by default libraries placed next to executables aren't loaded. To fix this you have to run `winecfg`. On the `Applications` tab add `BF1942.exe`, then on the `Libraries` tab add `dsound` to the dll overrides.
 
