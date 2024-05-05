@@ -4,7 +4,7 @@ This mod provides several [fixes](#bugfixes) and [improvements](#improvements) t
 The current version is `1.3.3`. You can see your version in the main menu in the bottom left corner.
 
 ### Installation
-Copy `dsound.dll` into your game directory.
+Download the [latest release](https://github.com/uuuzbf/bf42plus/releases) and copy `dsound.dll` into your game directory.
 
 _If you already have a modded `dsound.dll` in your game directory, rename it to `dsound_next.dll`, it will keep working!_
 
