@@ -63,8 +63,10 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                     break;
                 case SE_DEATH:
                 case SE_DEATHNOMSG:
-                    if (g_highPrecBlindTest) {
+                    if (g_settings.smootherGameplay) {
                         if (ev->playerid == BFPlayer::getLocal()->getId()) {
+                            // local player just died, drop some actions instead of sending it to the server
+                            // see also patch_drop_actions()
                             g_actionsToDrop = 3;
                         }
                     }
@@ -97,23 +99,6 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                 }
             }
             break;
-        }
-        case BF_GameStatusEvent: {
-            auto ev = reinterpret_cast<GameStatusEvent*>(event);
-            if (ev->newStatus == GS_ENDMAP) {
-                if (g_settings.highPrecBlindTest) {
-                    chatMessage(g_highPrecBlindTest ? "High precision mode was ENABLED" : "High precision mode was DISABLED");
-                    BfMenu::getSingleton()->setCenterKillMessage(g_highPrecBlindTest ? L"High precision mode was ENABLED" : L"High precision mode was DISABLED");
-                    auto players = BFPlayer::getPlayers();
-                    if (players) {
-                        for (auto it = players->begin(); it != players->end(); ++it) {
-                            std::string name = (*it)->getName();
-                            name.append(g_highPrecBlindTest ? "*ENABLED" : "*DISABLED");
-                            (*it)->setName(name);
-                        }
-                    }
-                }
-            }
         }
     }
     return event;

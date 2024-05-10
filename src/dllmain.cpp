@@ -11,10 +11,7 @@ WinMain_t* WinMain_orig = 0;
 int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     g_settings.load();
-    if (g_settings.highPrecBlindTest) {
-        sodium_init();
-        g_highPrecBlindTest = (randombytes_uniform(100) < 50); // enable patch with 50% chance
-    }
+
     bfhook_init();
 
 #ifndef _DEBUG

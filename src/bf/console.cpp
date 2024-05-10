@@ -307,20 +307,20 @@ public:
 };
 ConsoleObjectPlusDebugTextColor commandPlusDebugTextColor;
 
-class ConsoleObjectPlusHighPrecBlindTest : public ConsoleObjectBoolSetting {
+class ConsoleObjectPlusSmootherGameplay : public ConsoleObjectBoolSetting {
 public:
-    ConsoleObjectPlusHighPrecBlindTest() : ConsoleObjectBoolSetting() {
-        functionname = "highPrecBlindTest";
+    ConsoleObjectPlusSmootherGameplay() : ConsoleObjectBoolSetting() {
+        functionname = "smootherGameplay";
     };
     virtual void* executeObjectMethod() {
         if (argcount == 0) {
-            result = g_settings.highPrecBlindTest.value;
+            result = g_settings.smootherGameplay.value;
             hasreturnvalue = true;
             return &result;
         }
         else if (argcount == 1) {
-            g_settings.highPrecBlindTest.value = args[0] != 0;
-            g_settings.highPrecBlindTest.dirty = true;
+            g_settings.smootherGameplay.value = args[0] != 0;
+            g_settings.smootherGameplay.dirty = true;
             g_settings.save(false);
             hasreturnvalue = false;
             needsRestart();
@@ -328,7 +328,7 @@ public:
         return 0;
     };
 };
-ConsoleObjectPlusHighPrecBlindTest commandPlusHighPrecBlindTest;
+ConsoleObjectPlusSmootherGameplay commandPlusSmootherGameplay;
 
 
 class ConsoleObjectPlusPresetBuddyColors : public ConsoleObject {
@@ -391,41 +391,6 @@ public:
     };
 };
 ConsoleObjectPlusPresetBuddyColors commandPlusPresetBuddyColors;
-
-
-class ConsoleObjectPlusTestStatus : public ConsoleObject {
-    bfs::string result;
-public:
-    ConsoleObjectPlusTestStatus() {
-        isdynamic = true;
-        type = 0;
-        access = 1;
-        objectname = "plus";
-        functionname = "testStatus";
-        minargcount = 0;
-        maxargcount = 0;
-        retdesc = "std::string";
-        customCommands.push_back(this);
-    };
-    virtual bool isObjectActive() const { return true; };
-    virtual void* executeObjectMethod() {
-        if (!g_settings.highPrecBlindTest) {
-            result = "You did not enable blind testing.";
-        }
-        else {
-            result = g_highPrecBlindTest ? "Patches are ENABLED" : "Patches are DISABLED";
-        }
-        hasreturnvalue = true;
-        return 0;
-    };
-    virtual bfs::string getReturnValueAsString() {
-        if (hasreturnvalue) {
-            return result;
-        }
-        return "";
-    };
-};
-ConsoleObjectPlusTestStatus commandPlusTestStatus;
 
 class ConsoleObjectPlusCorrectedLookSensitivity : public ConsoleObjectBoolSetting {
 public:

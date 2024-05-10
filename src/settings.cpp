@@ -101,7 +101,7 @@ Settings::Settings()
         &showVoteInConsole,
         &lowerNametags,
         &debugTextColor,
-        &highPrecBlindTest,
+        &smootherGameplay,
         &presetBuddyColors,
         &correctedLookSensitivity,
     };
@@ -120,9 +120,13 @@ bool Settings::load()
 
     bool needToSaveNewSettings = false;
 
-    // remove deleted option
+    // remove deleted options
     if (ini.KeyExists(L"general", L"unlockConsole")) {
         ini.Delete(L"general", L"unlockConsole", false);
+        needToSaveNewSettings = true;
+    }
+    if (ini.KeyExists(L"general", L"highPrecBlindTest")) {
+        ini.Delete(L"general", L"highPrecBlindTest", false);
         needToSaveNewSettings = true;
     }
 

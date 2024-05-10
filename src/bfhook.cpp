@@ -2,7 +2,6 @@
 
 #pragma warning(disable: 4740)
 
-bool g_highPrecBlindTest = false;
 int g_actionsToDrop = 0;
 
 void patch_Particle_handleUpdate_crash()
@@ -269,12 +268,17 @@ void patch_add_plus_version_to_accept_ack()
 
 void patch_higher_precision_fpu()
 {
-    // pass D3DCREATE_FPU_PRESERVE to IDirect3D8::CreateDevice
-    // see also https://stackoverflow.com/questions/12707961/switching-fpu-to-single-precision
-    // .text:0063F217 1D4 83 C8 40                          or      eax, 40h      
+    // This patch makes sure the FPU runs at double precision instead of single precision, which is
+    // enforced by DirectX in the game. This may improve various calculations in the game, including
+    // frame timing, and simulation. Frame timing will get more accurate. With lower precision, the game
+    // usually runs a bit too fast, or too slow, which causes synchronization issues when playing on
+    // servers. Simulation accuracy may improve too, because servers run with double precision too,
+    // so the values calculated by the client and the server will have less difference.
+    // Pass D3DCREATE_FPU_PRESERVE (bitmask 0x02) to IDirect3D8::CreateDevice.
+    // See also https://stackoverflow.com/questions/12707961/switching-fpu-to-single-precision
+    // 0063F217 83 C8 40                        or eax, 40h      
     patchBytes(0x0063F217, { 0x83, 0xc8, 0x42 });
-    // .text:0063F0C1 1D4 C7 86 B8 00 00 00+                mov     dword ptr [esi+0B8h], 20h ; ' '
-    // .text:0063F0C1 1D4 20 00 00 00
+    // 0063F0C1 C7 86 B8 00 00 00 20 00 00 00   mov dword ptr [esi+0B8h], 20h ; ' '
     patchBytes(0x0063F0C1, { 0xc7, 0x86, 0xb8, 0, 0, 0, 0x22, 0, 0, 0 });
 
     // DirectX shouldn't touch the fpu masks now, but it expects all exceptions to be masked
@@ -290,6 +294,20 @@ void patch_higher_precision_fpu()
 
 void patch_drop_actions()
 {
+    // Hook GameClient::registerPlayerAction to drop a number of player actions when requested.
+    // When the global g_actionsToDrop is nonzero, a PlayerAction is dropped instead of it being
+    // queued for sending to the server. The variable is also decremented.
+    // Regularly dropping these packets helps in minimizing input delay between the client and
+    // the server simulation. When the player dies its safe to drop some of these actions because
+    // the resulting stuttering won't be noticeable, and there is no real effect to the gameplay
+    // because the player just died anyway.
+    // 
+    // When the client sends more actions than the server can process (can easily happen if
+    // the server runs slower than the client, see also FPU precision patch above),
+    // the server may buffer up to 4 player actions before processing it. This can result in
+    // a total input delay of about 133ms (an action is sent every 33ms). Keeping this buffer short
+    // may improve gameplay.
+    
     BEGIN_ASM_CODE(a)
         cmp g_actionsToDrop, 0
         jz cont
@@ -325,7 +343,7 @@ void bfhook_init()
     patch_disable_cpu_clock_measurement();
     patch_fix_MemoryPool_crash_on_loading();
     if (g_settings.lowerNametags) patch_lower_nametags_when_close();
-    if (g_highPrecBlindTest) {
+    if (g_settings.smootherGameplay) {
         patch_higher_precision_fpu();
         patch_drop_actions();
     }

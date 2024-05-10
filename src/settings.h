@@ -92,14 +92,14 @@ public:
         L"general", L"debugTextColor",
         L"; Sets the color of console.showStats, console.showFPS, etc",
         0, 0xffff00 /*yellow*/ };
-    BoolSetting highPrecBlindTest = {
-        L"general", L"highPrecBlindTest",
-        L"; Enable blind testing of high precision FPU mode.\n"
-        L"; At startup the precision patch may be applied, and on map end\n"
-        L"; it is revealed if it was applied or not. Please report your experiences\n"
-        L"; on the SiMPLE forum or on discord (username uuuzbf).\n"
-        L"; THIS SETTING WILL BE REMOVED IN NEXT VERSIONS",
-        0, false };
+    BoolSetting smootherGameplay = {
+        L"general", L"smootherGameplay",
+        L"; Enables some patches that make the game run smoother. This\n"
+        L"; may have a very small performance impact on older systems.\n"
+        L"; The patches affect the floating point precision the game runs\n"
+        L"; with. When playing in multiplayer the time it takes for the\n"
+        L"; server to process your input will be decreased.",
+        0, true };
     ColorListSetting presetBuddyColors = {
         L"general", L"presetBuddyColors",
         L"; Sets the colors chosen when the ADD BUDDY button is repeatedly clicked on the scoreboard",
