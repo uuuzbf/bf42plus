@@ -326,6 +326,17 @@ void patch_showFPS_more_precision_on_averages()
     patchBytes(0x004628E6 + 1, fmt);
 }
 
+void patch_key_reading_to_silently_fail()
+{
+    // When these patches are applied the game won't care if the registry keys containing the
+    // CD key are missing, random garbage present in the target buffers will be used.
+    // These patches are from the wild, collected from some exes.
+
+    patchBytes(0x0040CD5E, { 0xeb, 0x66 }); // jnz to jmp
+    patchBytes(0x00459EED, { 0xeb, 0x07 }); // jnz to jmp
+    patchBytes(0x0049510A, { 0xeb, 0x20 }); // jnz to jmp
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -351,6 +362,7 @@ void bfhook_init()
     patch_WindowWin32__init_hook_for_updating();
     patch_add_plus_version_to_accept_ack();
     patch_showFPS_more_precision_on_averages();
+    patch_key_reading_to_silently_fail();
 
     generic_hook_init();
     gameevent_hook_init();

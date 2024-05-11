@@ -56,6 +56,13 @@ __declspec(naked) void Game::addPlayerInput_orig(int playerid, PlayerInput* inpu
     _asm jmp eax
 }
 
+static uintptr_t getStringFromRegistry_addr = 0x00443F10;
+__declspec(naked) bool __stdcall getStringFromRegistry(const char* key, const char* valueName, char* output, size_t* outlength)
+{
+    _asm mov eax, getStringFromRegistry_addr
+    _asm jmp eax
+}
+
 void Game::addPlayerInput_hook(int playerid, PlayerInput* input)
 {
     // input can be modified here, the object will not be used after this function returns
@@ -85,7 +92,53 @@ void Game::addPlayerInput_hook(int playerid, PlayerInput* input)
     addPlayerInput_orig(playerid, input);
 }
 
+// This function reads a value from HKLM, it is used by the game to read the CD key out of registry
+// this is a Setup method but the "this" object pointer is not used so it can be called as __stdcall
+bool __stdcall getStringFromRegistry_hook(const char* key, const char* valueName, char* output, size_t* outlength)
+{
+    bool ok = getStringFromRegistry(key, valueName, output, outlength);
+
+    // Make sure a CD key is being retrieved
+    size_t keylength = strlen(key);
+    if (keylength < 6 || strcmp(key + (keylength - 5), "\\ergc") != 0 || *valueName != 0) {
+        // Not a CD key is being retrieved, this never actually happens
+        return ok;
+    }
+
+    bool useMachineGuid = false;
+    if (!ok) {
+        // Reading CD key from registry failed, use alternate methods for obtaining an unique ID
+        useMachineGuid = true;
+        ok = true;
+    }
+
+    if (useMachineGuid) {
+        // Use windows installation ID as a base for key generation
+        char guid[40];
+        DWORD guid_size = sizeof(guid);
+        if (GetMachineGUID((unsigned char*)guid, &guid_size)) {
+            // The hash of the installation id is converted into a string containing a 22 digit decimal number
+            
+            // Hash the installation ID, use the 96 bits of the result as 3 32 bit integers
+            sodium_init();
+            uint32_t temp[3];
+            crypto_generichash((unsigned char*)temp, sizeof(temp), (unsigned char*)guid, guid_size, 0, 0);
+
+            // convert the three integers into three 10 character decimal numbers
+            char tempstr[3][12];
+            for (int i = 0; i < 3; i++) sprintf(tempstr[i], "%010u", temp[i]);
+
+            // concatenate the three numbers, drop the first digits because its less random
+            // the output buffer is always 40 bytes
+            snprintf(output, 23, "%s%s%s\n", tempstr[0] + 3, tempstr[1] + 2, tempstr[2] + 3);
+            *outlength = strlen(output);
+        }
+    }
+    return ok;
+}
+
 void generic_hook_init()
 {
     addPlayerInput_addr = (uintptr_t)hook_function(addPlayerInput_addr, 8, method_to_voidptr(&Game::addPlayerInput_hook));
+    getStringFromRegistry_addr = (uintptr_t)hook_function(getStringFromRegistry_addr, 5, getStringFromRegistry_hook);
 }

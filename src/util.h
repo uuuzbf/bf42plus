@@ -68,6 +68,9 @@ struct StringCompareNoCase {
 
 uint8_t crc8(uint8_t* data, size_t length);
 
+// Reads the Windows MachineGuid from the registry, output buffer must be atleast 40 bytes
+bool GetMachineGUID(BYTE* output, DWORD* size);
+
 //#ifdef _DEBUG
 void debuglog(const char* fmt, ...);
 //#else

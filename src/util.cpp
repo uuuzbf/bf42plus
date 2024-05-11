@@ -378,6 +378,53 @@ uint8_t crc8(uint8_t* data, size_t length)
     return crc;
 }
 
+
+
+static bool IsWow64()
+{
+    static BOOL isWow64 = false;
+    static bool valueValid = false;
+
+    typedef BOOL(WINAPI* LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+    static LPFN_ISWOW64PROCESS fnIsWow64Process = 0;
+
+    if (!valueValid) {
+        fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandleA("kernel32"), "IsWow64Process");
+
+        if (NULL != fnIsWow64Process)
+        {
+            bool ok = fnIsWow64Process(GetCurrentProcess(), &isWow64);
+            if (!ok) debuglog("IsWow64Process failed (%08X)!\n", GetLastError());
+        }
+        valueValid = true;
+    }
+    return isWow64;
+}
+
+bool GetMachineGUID(BYTE* output, DWORD* size)
+{
+    HKEY key;
+    REGSAM access = KEY_READ;
+
+    if (IsWow64()) {
+        // When running as a 32 bit executable under 64 bit windows, the MachineGuid key is missing
+        // from WOW6432Node, need to access the 64-bit registry view
+        access |= KEY_WOW64_64KEY;
+    }
+
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", 0, access, &key)) {
+        debuglog("GetMachineGUID RegOpenKeyEx failed: %08X\n", GetLastError());
+        return false;
+    }
+
+    LSTATUS result = RegQueryValueExA(key, "MachineGuid", 0, 0, output, size);
+    RegCloseKey(key);
+    if (result != ERROR_SUCCESS) {
+        debuglog("GetMachineGUID RegQueryValueEx failed: %08X\n", result);
+    }
+    return result == ERROR_SUCCESS;
+}
+
 //#ifdef _DEBUG
 void debuglog(const char* fmt, ...)
 {
