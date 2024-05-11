@@ -335,6 +335,9 @@ void patch_key_reading_to_silently_fail()
     patchBytes(0x0040CD5E, { 0xeb, 0x66 }); // jnz to jmp
     patchBytes(0x00459EED, { 0xeb, 0x07 }); // jnz to jmp
     patchBytes(0x0049510A, { 0xeb, 0x20 }); // jnz to jmp
+
+    // Disable a call to a function that blacklists all keys starting with "0901"
+    nop_bytes(0x0045831D, 5);
 }
 
 void bfhook_init()
