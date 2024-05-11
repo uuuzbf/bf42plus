@@ -28,7 +28,7 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
             currentMessagePlayerID = ev->playerID;
             // do not output messages while downloading the database
             if (dataBaseCompleteEventReceived && g_settings.showConnectsInChat) {
-                auto message = std::string(ev->name) + " connected";
+                auto message = std::string(ev->name) + " connecting";
                 /*if (ev->team == 1 || ev->team == 2) {
                     message += ev->team == 1 ? " (axis)" : " (allied)";
                 }*/
