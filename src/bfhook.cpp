@@ -336,7 +336,8 @@ void patch_key_reading_to_silently_fail()
     patchBytes(0x00459EED, { 0xeb, 0x07 }); // jnz to jmp
     patchBytes(0x0049510A, { 0xeb, 0x20 }); // jnz to jmp
 
-    // Disable a call to a function that blacklists all keys starting with "0901"
+    // Disable a call to a function that tries to blacklist all keys starting with "0901"
+    // The function is broken anyway because its querying the (Default) value the wrong way
     nop_bytes(0x0045831D, 5);
 }
 

@@ -109,5 +109,9 @@ public:
 
 uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str);
 
+// MD5 hashes data, then fills outputHexString with 32 hexadecimal characters. A null
+// terminator is also appended, outputHexString must be atleast 33 bytes.
+void __fastcall MD5Digest(const void* data, unsigned int length, char* outputHexString);
+
 
 void generic_hook_init();
