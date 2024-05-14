@@ -1,7 +1,7 @@
 ## Battlefield 1942 client patches
 This mod provides several [fixes](#bugfixes) and [improvements](#improvements) to Battlefield 1942. It also has some [additional features](#optional-features) however these are all disabled by default. It is also possible to [set custom colors](#buddy-colors) for players on the buddy list.
 
-The current version is `1.3.3`. You can see your version in the main menu in the bottom left corner.
+The current version is `1.3.4`. You can see your version in the main menu in the bottom left corner.
 
 ### Installation
 Download the [latest release](https://github.com/uuuzbf/bf42plus/releases) and copy `dsound.dll` into your game directory.
@@ -25,7 +25,9 @@ If you want to enable some optional features, take a look at `bf42plus.ini` in t
 Alternatively you can change the configuration from the game's ingame console, type `plus.` then tap TAB twice to see the available commands.
 
 ### Updater
-The DLL has a builtin updater, so it can replace itself with newer versions. When there is an update available, a window will appear on startup, with the details of the new update. You have the option to postpone updating or apply the update. The mod only sends the mod's version string to the update server when checking for updates. No other data is transmitted. There is currently no option to disable update checking because the mod is still being actively developed and having people running outdated versions would defeat the purpose of the mod. All new future features/fixes that have any effect on the game will either be disabled by default or there will be the option to turn it off. Updates are cryptographically signed so if the update server is compromised its still not possible for an attacker to push out a malicious update, the update functionality will just be broken until the update server is restored. The update code is also designed to fail silently if it can't reach the update server.
+The DLL has a builtin updater, so it can replace itself with newer versions. When there is an update available, a window will appear on startup, with the details of the new update. You have the option to postpone updating or apply the update. The mod only sends the mod's version to the update server when checking for updates, no other data is transmitted.
+
+There is currently no option to disable update checking because the mod is still being actively developed and having people running outdated versions would defeat the purpose of the mod. All new future features/fixes that have any effect on the game will either be disabled by default or there will be the option to turn it off. Updates are cryptographically signed so if the update server is compromised its still not possible for an attacker to push out a malicious update, the update functionality will just be broken until the update server is restored. The update code is also designed to fail silently if it can't reach the update server.
 
 ### Buddy colors
 You can now assign different colors to buddies by clicking the `ADD BUDDY` button on the scoreboard repeatedly. It cycles between 4 different colors, or if the SHIFT key is pressed it assigns random colors.
@@ -58,6 +60,8 @@ You can also change the buddy colors in `bf42plus.ini` in the `[buddycolors]` se
 - Nametags are lowered when u get close to other players so you can see it. Can be disabled by adjusting `lowerNametags`
 - `game.showFPS`, `game.showStats`, etc screens are adjusted if you are using a different sized font, the font color is now yellow for better readability and can be changed with `debugTextColor` setting
 - Yellow server messages are immediatedly copied to the console so one isn't lost if it is overwritten by another
+- Game may run smoother because the CPU is set to a higher precision, also servers may feel less laggy. Can be disabled with `smootherGameplay`. For details [see below](#details-about-plussmoothergameplay-option)
+- If you don't have a CD key in the registry, or it is a public one from the internet, a unique one is used
 
 ### Optional features
 These features are disabled by default. Edit `bf42plus.ini` in the game directory to enable them.
@@ -66,6 +70,7 @@ These features are disabled by default. Edit `bf42plus.ini` in the game director
 - Show player IDs in nametags (option `showIDInNametags`)
 - Show in the console who started a vote or voted (option `showVoteInConsole`)
 - You can start the game temporarily in windowed mode if u hold SHIFT while the game is starting and select Yes
+- You can fix the higher mouse sensitivity while moving by enabling `correctedLookSensitivity` option
 
 ### Planned features
 - A 3D map like the one in BF:Vietnam
@@ -78,7 +83,7 @@ These features are disabled by default. Edit `bf42plus.ini` in the game director
 - Chat/kill logging to file
 
 ### Details about `plus.smootherGameplay` option
-In version 1.3.4, a new option was added that may make the game run smoother and reduce the time between you pressing a key and the server processing it. The impact of this is far less than the server-side "reg patch", but it may improve your game experience a bit. It is also possible that it won't have any effect on your game.
+In version `1.3.4`, a new option was added that may make the game run smoother and reduce the time between you pressing a key and the server processing it. The impact of this is far less than the server-side "reg patch", but it may improve your game experience a bit. It is also possible that it won't have any effect on your game.
 
 This option is really two adjustments under the hood. The first one tells DirectX to not mess with the CPU's floating point precision, so some calculations will be more accurate. The second one tries to clear a buffer on the server belonging to you, every time you die.
 
