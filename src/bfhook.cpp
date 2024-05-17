@@ -341,6 +341,34 @@ void patch_key_reading_to_silently_fail()
     nop_bytes(0x0045831D, 5);
 }
 
+void patch_fix_mine_warning_not_going_away()
+{
+    // Sometimes the mine warning icon remains where previously was a mine. This happens
+    // because the mine isn't reset properly when it is disabled by the server. Mines are
+    // only destroyed with the kit they belong to, they are just disabled when exploding/removing.
+    // ObjectManager has a projectile list that is only used (?) for displaying the mine warning,
+    // if Projectile::resetProjectile is not called when the projectile is disabled, it is not removed
+    // from the projectile list. Normally the server doesn't send ghost updates for disabled projectiles
+    // so it never gets disabled by the network code, only by the BFSoldier::useRepairPack method.
+    // If another network update is received after the wrench code disables the mine, it gets reenabled
+    // and it stays in the projectile list.
+
+    // Hook global disableObject function, which is called when an object is disabled by the network code.
+    // Call Projectile::resetProjectile if its a projectile
+    BEGIN_ASM_CODE(a)
+        // esi contains object ptr
+        mov ecx, [esi + 0x4C] // template
+        mov eax, [ecx]
+        call[eax + 0x0C] // template->getClassId()
+        cmp eax, 0x9495 // CID_ProjectileTemplate
+        jnz not_projectile
+        mov ecx, esi
+        mov eax, 0x00541F50 // Projectile::resetProjectile
+        call eax
+        not_projectile :
+    MOVE_CODE_AND_ADD_CODE(a, 0x004B77C7, 5, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -367,6 +395,7 @@ void bfhook_init()
     patch_add_plus_version_to_accept_ack();
     patch_showFPS_more_precision_on_averages();
     patch_key_reading_to_silently_fail();
+    patch_fix_mine_warning_not_going_away();
 
     generic_hook_init();
     gameevent_hook_init();
