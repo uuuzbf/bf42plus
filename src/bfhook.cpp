@@ -369,6 +369,27 @@ void patch_fix_mine_warning_not_going_away()
     MOVE_CODE_AND_ADD_CODE(a, 0x004B77C7, 5, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+void patch_fix_glitchy_projectile_pickup()
+{
+    // In BFSoldier::useRepairPack, do not call resetProjectile when picking up projectiles if
+    // we are playing on a server. The network code will remove the mine when it is picked up
+    // serverside. This fixes the flashing projectile bug when picking up stuff.
+    BEGIN_ASM_CODE(b)
+        push ecx
+        mov eax, 0x0095F8D4
+        mov ecx, [eax] // g_pIGame
+        mov eax, [ecx]
+        push 120002 // IGameClient
+        call [eax+8]
+        pop ecx
+        test eax,eax
+        jnz skip_reset_projectile // if IGameClient != 0 skip resetProjectile()
+        mov eax, 0x00541F50 // Projectile::resetProjectile
+        call eax
+    skip_reset_projectile:
+    MOVE_CODE_AND_ADD_CODE(b, 0x004F85C7, 5, HOOK_DISCARD_ORIGINAL);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -396,6 +417,7 @@ void bfhook_init()
     patch_showFPS_more_precision_on_averages();
     patch_key_reading_to_silently_fail();
     patch_fix_mine_warning_not_going_away();
+    patch_fix_glitchy_projectile_pickup();
 
     generic_hook_init();
     gameevent_hook_init();
