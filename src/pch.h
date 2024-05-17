@@ -44,6 +44,7 @@
 #include "updater.h"
 #include "hooks.h"
 #include "bfhook.h"
+#include "debug.h"
 
 #include "bf/stl.h"
 #include "bf/generic.h"

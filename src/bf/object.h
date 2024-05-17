@@ -4,6 +4,7 @@
 
 
 class ObjectTemplate;
+class NetworkableBase;
 
 class IObject : public IBase {
 protected:
@@ -19,7 +20,7 @@ protected:
     void* geometry;
     void* physicsNode;
     void* responsePhysics;
-    void* networkable;
+    NetworkableBase* networkable;
 public:
     virtual ~IObject() = 0;
     virtual void init() = 0;
@@ -64,6 +65,7 @@ public:
     virtual void internalRelease() = 0;
     ObjectTemplate* getTemplate() const { return tmpl; };
     int getID() const { return gridid; };
+    NetworkableBase* getNetworkable() const { return networkable; };
 };
 
 static_assert(sizeof(IObject) == 0x6C);
@@ -97,3 +99,34 @@ public:
 };
 
 static_assert(sizeof(ObjectTemplate) == 0x58);
+
+struct BaseLineData;
+struct NetworkInfo;
+
+class NetworkableBase : public IBase {
+    uint16_t networkID;
+    NetworkInfo* networkInfo;
+    uint8_t unkC;
+    float basePriority;
+    uint8_t unk14;
+    void* pINetworkableObject;
+    bool allocatedFromMemoryPool;
+    uint8_t unk1D;
+    uint32_t unk20;
+    uint32_t unk24;
+    int updateIndex;
+    uint32_t unk2C;
+    int bsStartPosition;
+public:
+    virtual bool init(void* object) = 0;
+    virtual uint32_t getGhostStateMask() const = 0;
+    virtual void updateStateMask(uint32_t mask) = 0;
+    virtual bool getNetUpdate(BitStream& bs, BaseLineData* b, uint32_t, int32_t, bool) = 0;
+    virtual void setNetUpdate(BitStream& bs, float time, bool, BaseLineData*, bool) = 0;
+    virtual bool getBaseLine(BaseLineData& out) = 0;
+    virtual int getMinimumBitSize() const = 0;
+    virtual ~NetworkableBase() = 0;
+    uint16_t getID() const { return networkID; };
+};
+
+static_assert(sizeof(NetworkableBase) == 0x34);
