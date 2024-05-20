@@ -64,15 +64,14 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 
         if (!blackscreenFound) {
             updater_client_startup();
-
-            if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) {
-                if (MessageBoxA(0, "Left Shift pressed\nStart in window mode?", "BF42Plus", MB_YESNO) == IDYES) {
-                    nop_bytes(0x00442686, 2); // force 0 in Setup__setFullScreen
-                }
-            }
         }
     }
 #endif
+    if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) {
+        if (MessageBoxA(0, "Left Shift pressed\nStart in window mode?", "BF42Plus", MB_YESNO) == IDYES) {
+            nop_bytes(0x00442686, 2); // force 0 in Setup__setFullScreen
+        }
+    }
 
     register_custom_console_commands();
 
