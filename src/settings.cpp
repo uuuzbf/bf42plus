@@ -104,6 +104,7 @@ Settings::Settings()
         &smootherGameplay,
         &presetBuddyColors,
         &correctedLookSensitivity,
+        &enable3DMineMap,
     };
 }
 

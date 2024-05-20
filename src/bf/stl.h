@@ -169,17 +169,41 @@ namespace bfs
     template<class Kt, class Vt>
     class map {
     public:
-        enum Color { Red, Black };
+        enum Color : uint8_t { Red, Black };
         struct Node {
             Node* left;
             Node* parent;
             Node* right;
             std::pair<Kt, Vt> pair;
+            uint8_t _pad;
             Color color;
+            // this is iterator::increment(), but there are no iterators yet
+            Node* next() {
+                if (color == Red) {
+                    auto node = right;
+                    if (node->color == Black) {
+                        auto node2 = this;
+                        for (node = parent; node->color == Red; node = node->parent) {
+                            if (node2 != node->right) {
+                                break;
+                            }
+                            node2 = node;
+                        }
+                    }
+                    else {
+                        for (auto node2 = node->left; node2->color == Red; node2 = node2->left) {
+                            node = node2;
+                        }
+                    }
+                    return node;
+                }
+                return this;
+            }
         };
         uint32_t allocator;
         Node* head;
         size_t size;
 
+        bool empty() const { return head->left == head; };
     };
 }

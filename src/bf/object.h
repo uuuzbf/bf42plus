@@ -130,3 +130,7 @@ public:
 };
 
 static_assert(sizeof(NetworkableBase) == 0x34);
+
+// This returns a map containing all projectiles which need a mine warning icon
+// Move this into ObjectManager when there will be one.
+bfs::map<unsigned int, IObject*> ObjectManager_getProjectileMap();

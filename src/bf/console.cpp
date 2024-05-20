@@ -414,6 +414,28 @@ public:
 };
 ConsoleObjectPlusCorrectedLookSensitivity commandPlusCorrectedLookSensitivity;
 
+class ConsoleObjectPlusEnable3DMineMap : public ConsoleObjectBoolSetting {
+public:
+    ConsoleObjectPlusEnable3DMineMap() : ConsoleObjectBoolSetting() {
+        functionname = "enable3DMineMap";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.enable3DMineMap.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.enable3DMineMap.value = args[0] != 0;
+            g_settings.enable3DMineMap.dirty = true;
+            g_settings.save(false);
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusEnable3DMineMap commandPlusEnable3DMineMap;
+
 
 
 void register_custom_console_commands()

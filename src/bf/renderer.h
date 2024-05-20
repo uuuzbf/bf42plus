@@ -164,6 +164,7 @@ public:
     void drawDebugText_orig(int x, int y, const bfs::string& str) noexcept;
     void drawDebugText(int x, int y, const bfs::string& str);
 
+    NewRendFont* getFont() const { return font; };
 };
 
 void renderer_hook_init();

@@ -110,6 +110,10 @@ public:
         L"; This option enables a workaround that makes the on-foot sensitivity to always be the same\n"
         L"; WARNING: Enabling this may feel unusual because of the decreased sensitivity!",
         0, false };
+    BoolSetting enable3DMineMap = {
+        L"general", L"enable3DMineMap",
+        L"; Enable 3D map showing friendly mines. This is a temporary option.",
+        0, false };
 };
 
 extern Settings g_settings;

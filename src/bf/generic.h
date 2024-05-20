@@ -21,12 +21,26 @@ public:
 class IObject;
 class BitStream;
 
+const float BF_FLT_EPSILON = 1.1920929e-7;
+
 struct Vec2 {
     float x, y;
 };
 
-class Vec3;
-typedef Vec3 Pos3;
+template <class T>
+struct BaseVector3 {
+public:
+    T x, y, z;
+    BaseVector3() : x(0), y(0), z(0) {};
+    BaseVector3(T x, T y, T z) : x(x), y(y), z(z) {};
+    BaseVector3 operator+(const BaseVector3& r) { return BaseVector3(x + r.x, y + r.y, z + r.z); };
+    BaseVector3 operator-(const BaseVector3& r) { return BaseVector3(x - r.x, y - r.y, z - r.z); };
+    T length() const { return sqrt(lengthSquare()); };
+    T lengthSquare() const { return x * x + y * y + z * z; };
+};
+typedef BaseVector3<float> Vec3;
+typedef BaseVector3<float> Pos3;
+
 class Mat4; // BaseMatrix4<float>
 
 struct PlayerInput {
@@ -48,6 +62,7 @@ public:
 
 
 class BFPlayer : public IBase {
+
 public:
     virtual int GetClassID();
     virtual ~BFPlayer();
@@ -74,6 +89,8 @@ public:
     static BFPlayer* __stdcall getFromID(int id);
     static BFPlayer* getLocal();
     static bfs::list<BFPlayer*>* getPlayers();
+
+    int getTeam() const { return *(int*)((intptr_t)this + 0xAC); };
 };
 
 template<int B>
