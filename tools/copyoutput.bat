@@ -7,3 +7,4 @@ IF NOT DEFINED BF1942_DIR (
 del "%BF1942_DIR%\dsound_old.dll"
 rename "%BF1942_DIR%\dsound.dll" dsound_old.dll
 copy /y "%1" "%BF1942_DIR%\dsound.dll"
+copy /y "%~dpn1.pdb" "%BF1942_DIR%"
