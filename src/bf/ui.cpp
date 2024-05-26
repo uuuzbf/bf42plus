@@ -166,7 +166,7 @@ void BfMenu::setCenterKillMessage_hook(bfs::wstring message)
         wchar_t* data = message.data();
         for (size_t i = 0, size = message.size(); i < size; i++) {
             wchar_t c = data[i];
-            if (c < ' ' || c == 0x7F || c == 0xA0) data[i] = ' ';
+            if (c < ' ' || (c >= 0x7F && c < 0xA0)) data[i] = ' ';
         }
     }
 
