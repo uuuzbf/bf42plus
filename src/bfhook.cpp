@@ -453,9 +453,5 @@ void bfhook_init()
 
     patch_install_bf_debug_callback_handler();
 
-    trace_function_fastcall(0x00541F50, 9, function_tracer_fastcall, "?OC:Projectile__resetProjectile");
-    trace_function_fastcall(0x00542380, 5, function_tracer_fastcall, "?OC:Projectile__activate");
-    trace_function_fastcall(0x005427B0, 9, function_tracer_fastcall, "?OC:Projectile__detonate");
-
     dynbuffer_make_nonwritable();
 }
