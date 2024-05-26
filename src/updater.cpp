@@ -509,7 +509,8 @@ void restart_bf1942()
     }
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-    ExitProcess(0);
+    //ExitProcess(0); // ExitProcess runs global destructors, those may crash
+    TerminateProcess(GetCurrentProcess(), 0);
 }
 
 void updater_wait_for_updating()

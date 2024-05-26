@@ -424,21 +424,3 @@ bool GetMachineGUID(BYTE* output, DWORD* size)
     }
     return result == ERROR_SUCCESS;
 }
-
-//#ifdef _DEBUG
-void debuglog(const char* fmt, ...)
-{
-    static FILE* fh = 0;
-    if (!fh) {
-        CreateDirectory(L"logs", 0);
-        fh = fopen("logs/bf42plus_debug.log", "w");
-        if (!fh) return;
-    }
-    va_list va;
-    va_start(va, fmt);
-    vfprintf(fh, fmt, va);
-    va_end(va);
-    fflush(fh);
-
-}
-//#endif

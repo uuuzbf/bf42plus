@@ -66,6 +66,9 @@
     <ClCompile Include="src\bf\object.cpp">
       <Filter>Source Files\bf</Filter>
     </ClCompile>
+    <ClCompile Include="src\crashreport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hooks.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files\bf</Filter>
     </ClInclude>
     <ClInclude Include="src\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\crashreport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

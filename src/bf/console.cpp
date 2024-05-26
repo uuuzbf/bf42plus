@@ -436,7 +436,46 @@ public:
 };
 ConsoleObjectPlusEnable3DMineMap commandPlusEnable3DMineMap;
 
-
+#ifdef _DEBUG
+class ConsoleObjectPlusCrash : public ConsoleObject {
+    bfs::string param;
+public:
+    ConsoleObjectPlusCrash() {
+        isdynamic = true;
+        type = 0;
+        access = 1;
+        objectname = "plus";
+        functionname = "crash";
+        minargcount = 1;
+        maxargcount = 1;
+        argdesc[0] = "crash";
+        argtype[0] = -1;
+        retdesc = "void";
+        customCommands.push_back(this);
+    };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            param = value;
+        }
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void* executeObjectMethod() {
+        if (argcount == 1) {
+            if (param == "crash") {
+                // patch mov ecx,[0] into Setup__mainLoop
+                patchBytes(0x0044ABC0, { 0x8B, 0x0D, 0x00, 0x00, 0x00, 0x00 });
+            }
+            else if (param == "hang") {
+                // patch jmp -2 (infinite loop) into Setup__mainLoop
+                patchBytes(0x0044ABC0, { 0xeb, 0xfe });
+            }
+        }
+        hasreturnvalue = false;
+        return 0;
+    };
+};
+ConsoleObjectPlusCrash commandPlusCrash;
+#endif
 
 void register_custom_console_commands()
 {

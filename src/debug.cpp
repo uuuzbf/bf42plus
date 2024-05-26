@@ -1,6 +1,6 @@
 #include "pch.h"
 
-static char* get_timestamp()
+char* getTimestamp()
 {
     static char buffer[128];
     SYSTEMTIME now;
@@ -9,12 +9,21 @@ static char* get_timestamp()
     return buffer;
 }
 
+char* getFileTimestamp()
+{
+    static char buffer[128];
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    snprintf(buffer, 128, "%04d-%02d-%02d_%02d-%02d-%02d-%03d", now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute, now.wSecond, now.wMilliseconds);
+    return buffer;
+}
+
 void __stdcall function_tracer_fastcall(const char* name, uintptr_t* args) {
     static bfs::string* g_console_run_result = (bfs::string*)0x009A9428;
     if (strcmp(name, "?S1S2S3S4:GameConsole__run") == 0 && g_console_run_result->length != 0) {
         debuglog("run result: %s\n", g_console_run_result->c_str());
     }
-    char* now = get_timestamp();
+    char* now = getTimestamp();
     if (*name == '?') {
         // format string: starts with ? ends with :
         // arg format is <type><argid>
@@ -101,3 +110,72 @@ void __stdcall function_tracer_fastcall(const char* name, uintptr_t* args) {
         debuglog("%s [trace] %p -> %s (ecx=%08X, edx=%08X, %08X, %08X, %08X, %08X)\n", now, (void*)args[2], name, args[0], args[1], args[3], args[4], args[5], args[6]);
     }
 }
+
+//#ifdef _DEBUG
+static FILE* debuglogHandle = 0;
+static bool debuglogOpenFailed = false;
+
+static bool maybeOpenDebuglog()
+{
+    if (debuglogOpenFailed) return false;
+    CreateDirectory(L"logs", 0);
+    DeleteFile(L"logs/bf42plus_debug.3.log");
+    MoveFile(L"logs/bf42plus_debug.2.log", L"logs/bf42plus_debug.3.log");
+    MoveFile(L"logs/bf42plus_debug.1.log", L"logs/bf42plus_debug.2.log");
+    MoveFile(L"logs/bf42plus_debug.log", L"logs/bf42plus_debug.1.log");
+    debuglogHandle = fopen("logs/bf42plus_debug.log", "w");
+    if (!debuglogHandle) {
+        debuglogOpenFailed = true;
+        return false;
+    }
+    return true;
+}
+
+void debuglog(const char* fmt, ...)
+{
+    if (!debuglogHandle && !maybeOpenDebuglog()) {
+        return;
+    }
+    va_list va;
+    va_start(va, fmt);
+    vfprintf(debuglogHandle, fmt, va);
+    va_end(va);
+    fflush(debuglogHandle);
+}
+
+void debuglogt(const char* fmt, ...)
+{
+    if (!debuglogHandle && !maybeOpenDebuglog()) {
+        return;
+    }
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    fprintf(debuglogHandle, "[%02d:%02d:%02d.%03d] (%05d) ", now.wHour, now.wMinute, now.wSecond, now.wMilliseconds, GetCurrentThreadId());
+    va_list va;
+    va_start(va, fmt);
+    vfprintf(debuglogHandle, fmt, va);
+    va_end(va);
+    fflush(debuglogHandle);
+}
+
+bool isDebuglogOpen()
+{
+    return debuglogHandle != 0;
+}
+
+void closeAndRenameDebuglog(const char* timestamp, const char* suffix)
+{
+    if (!isDebuglogOpen()) return;
+
+    fclose(debuglogHandle);
+    debuglogHandle = 0;
+
+    char newname[MAX_PATH];
+    snprintf(newname, MAX_PATH, "logs/crash/%s_%s.log", timestamp, suffix);
+
+    CreateDirectory(L"logs/crash", 0);
+
+    MoveFileA("logs/bf42plus_debug.log", newname);
+}
+
+//#endif

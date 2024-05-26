@@ -34,6 +34,19 @@ inline void BoolSetting::save(CSimpleIni& ini)
     }
 }
 
+inline void IntSetting::load(const CSimpleIni& ini)
+{
+    value = ini.GetLongValue(section, name, value);
+}
+
+inline void IntSetting::save(CSimpleIni& ini)
+{
+    if (dirty) {
+        ini.SetLongValue(section, name, value, comment);
+        dirty = false;
+    }
+}
+
 void ColorSetting::load(const CSimpleIni& ini)
 {
     auto colorString = ini.GetValue(section, name);
@@ -105,6 +118,8 @@ Settings::Settings()
         &presetBuddyColors,
         &correctedLookSensitivity,
         &enable3DMineMap,
+        &crashCreateFullDump,
+        &crashDumpsToKeep,
     };
 }
 

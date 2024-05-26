@@ -45,6 +45,7 @@
 #include "hooks.h"
 #include "bfhook.h"
 #include "debug.h"
+#include "crashreport.h"
 
 #include "bf/stl.h"
 #include "bf/generic.h"

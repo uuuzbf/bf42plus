@@ -390,6 +390,33 @@ void patch_fix_glitchy_projectile_pickup()
     MOVE_CODE_AND_ADD_CODE(b, 0x004F85C7, 5, HOOK_DISCARD_ORIGINAL);
 }
 
+static void __fastcall debugcallback(unsigned int level, bfs::string* modulename, bfs::string* filename, int line, bfs::string* expression, bfs::string* message, bfs::string* p5)
+{
+    static auto debugLevels = std::to_array<const char*>({"DEBUG", "INFO", "WARNING", "ASSERT", "ERROR", "LOG"});
+    auto levelName = level < debugLevels.size() ? debugLevels[level] : "?";
+
+    debuglogt("[game] %s %s:%s:%d p3:%s message:'%s' expr:%s\n",
+        levelName, modulename->c_str(), filename->c_str(),
+        line, expression->c_str(), message->c_str(), p5->c_str());
+
+    if (level == 4) { // error
+        debuglogt("error message received, aborting! (%s)\n", message->c_str());
+        handleFatalError();
+    }
+}
+
+void patch_install_bf_debug_callback_handler()
+{
+    // Override handlers used by Debug() in the game
+    // First disable functions that change or disable these
+    // handlers, then install our own for each message level.
+    nop_bytes(0x5821E0, 7); // disable Debug::setDebugCallback
+    nop_bytes(0x582470, 7); // disable turnOffAllDebug
+    // set debug callback for each message level (0..5)
+    void** g_debug_callback = (void**)0x009A2320;
+    for (int i = 0; i < 6; i++) g_debug_callback[i] = (void*)debugcallback;
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -423,6 +450,12 @@ void bfhook_init()
     gameevent_hook_init();
     ui_hook_init();
     renderer_hook_init();
+
+    patch_install_bf_debug_callback_handler();
+
+    trace_function_fastcall(0x00541F50, 9, function_tracer_fastcall, "?OC:Projectile__resetProjectile");
+    trace_function_fastcall(0x00542380, 5, function_tracer_fastcall, "?OC:Projectile__activate");
+    trace_function_fastcall(0x005427B0, 9, function_tracer_fastcall, "?OC:Projectile__detonate");
 
     dynbuffer_make_nonwritable();
 }

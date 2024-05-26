@@ -182,7 +182,7 @@ bool __stdcall getStringFromRegistry_hook(const char* key, const char* valueName
             snprintf(output, 23, "%s%s%s\n", tempstr[0] + 3, tempstr[1] + 2, tempstr[2] + 3);
             *outlength = strlen(output) + 1; // outlength always includes the zero terminator
         }
-        debuglog("new key: %s\n", output);
+        debuglogt("new key: %s\n", output);
     }
     return ok;
 }

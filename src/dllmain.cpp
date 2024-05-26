@@ -10,9 +10,16 @@ typedef int __stdcall WinMain_t(HINSTANCE hInstance, HINSTANCE hPrevInstance, LP
 WinMain_t* WinMain_orig = 0;
 int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+
+    debuglogt("BF1942 started, plus version: %ls parameters: %s\n", get_build_version(), lpCmdLine);
+
+    initCrashReporter(g_this_module);
+
     g_settings.load();
 
     bfhook_init();
+
+    if (g_settings.crashDumpsToKeep > 0) deleteOldCrashDumps(g_settings.crashDumpsToKeep);
 
 #ifndef _DEBUG
     // Do not check for updates on map restarts
@@ -75,7 +82,17 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 
     register_custom_console_commands();
 
+#if 0
+    // For debugging the unhandled exception filter
+    __try {
+        return WinMain_orig(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
+    }
+    __except (unhandledExceptionFilter(GetExceptionInformation())) {
+        OutputDebugStringA("exception filter executed");
+    }
+#else
     return WinMain_orig(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
+#endif
 }
 
 extern "C" __declspec(dllexport)
