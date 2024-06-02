@@ -66,6 +66,8 @@ public:
     ObjectTemplate* getTemplate() const { return tmpl; };
     int getID() const { return gridid; };
     NetworkableBase* getNetworkable() const { return networkable; };
+    IObject* getParent() const { return parent; };
+    bool hasMobilePhysics() const;
 };
 
 static_assert(sizeof(IObject) == 0x6C);
@@ -134,3 +136,7 @@ static_assert(sizeof(NetworkableBase) == 0x34);
 // This returns a map containing all projectiles which need a mine warning icon
 // Move this into ObjectManager when there will be one.
 bfs::map<unsigned int, IObject*> ObjectManager_getProjectileMap();
+
+// This returns a map containing all SupplyDepots
+// Move this into ObjectManager when there will be one.
+bfs::map<unsigned int, IObject*> ObjectManager_getSupplyDepotMap();

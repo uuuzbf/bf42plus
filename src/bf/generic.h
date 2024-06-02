@@ -33,8 +33,8 @@ public:
     T x, y, z;
     BaseVector3() : x(0), y(0), z(0) {};
     BaseVector3(T x, T y, T z) : x(x), y(y), z(z) {};
-    BaseVector3 operator+(const BaseVector3& r) { return BaseVector3(x + r.x, y + r.y, z + r.z); };
-    BaseVector3 operator-(const BaseVector3& r) { return BaseVector3(x - r.x, y - r.y, z - r.z); };
+    BaseVector3 operator+(const BaseVector3& r) const { return BaseVector3(x + r.x, y + r.y, z + r.z); };
+    BaseVector3 operator-(const BaseVector3& r) const { return BaseVector3(x - r.x, y - r.y, z - r.z); };
     T length() const { return sqrt(lengthSquare()); };
     T lengthSquare() const { return x * x + y * y + z * z; };
 };

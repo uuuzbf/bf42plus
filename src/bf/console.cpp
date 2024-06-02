@@ -436,6 +436,28 @@ public:
 };
 ConsoleObjectPlusEnable3DMineMap commandPlusEnable3DMineMap;
 
+class ConsoleObjectPlusEnable3DSupplyMap : public ConsoleObjectBoolSetting {
+public:
+    ConsoleObjectPlusEnable3DSupplyMap() : ConsoleObjectBoolSetting() {
+        functionname = "enable3DSupplyMap";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.enable3DSupplyMap.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.enable3DSupplyMap.value = args[0] != 0;
+            g_settings.enable3DSupplyMap.dirty = true;
+            g_settings.save(false);
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusEnable3DSupplyMap commandPlusEnable3DSupplyMap;
+
 #ifdef _DEBUG
 class ConsoleObjectPlusCrash : public ConsoleObject {
     bfs::string param;

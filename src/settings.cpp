@@ -118,6 +118,7 @@ Settings::Settings()
         &presetBuddyColors,
         &correctedLookSensitivity,
         &enable3DMineMap,
+        &enable3DSupplyMap,
         &crashCreateFullDump,
         &crashDumpsToKeep,
     };

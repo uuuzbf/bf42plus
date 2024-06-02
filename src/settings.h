@@ -123,6 +123,10 @@ public:
         L"general", L"enable3DMineMap",
         L"; Enable 3D map showing friendly mines. This is a temporary option.",
         0, false };
+    BoolSetting enable3DSupplyMap = {
+        L"general", L"enable3DSupplyMap",
+        L"; Enable 3D map showing heal, ammo, repair points. This is a temporary option.",
+        0, false };
     BoolSetting crashCreateFullDump = {
         L"general", L"crashCreateFullDump",
         L"; When the game crashes create a full memory dump, which are much larger (500MB+).",
