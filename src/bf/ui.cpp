@@ -93,6 +93,20 @@ __declspec(naked) void BfMenu::setServerMessage_orig(bfs::string message) noexce
     _asm jmp eax
 }
 
+static uintptr_t addToIgnoreList_addr = 0x006A9340;
+__declspec(naked) void BfMenu::addToIgnoreList_orig(int playerid) noexcept
+{
+    _asm mov eax, addToIgnoreList_addr
+    _asm jmp eax
+}
+
+static uintptr_t removeFromIgnoreList_addr = 0x006A90B0;
+__declspec(naked) void BfMenu::removeFromIgnoreList_orig(int playerid) noexcept
+{
+    _asm mov eax, removeFromIgnoreList_addr
+    _asm jmp eax
+}
+
 #pragma warning(pop)
 
 void BfMenu::addPlayerChatMessage_hook(bfs::wstring message, BFPlayer* player, int team)
@@ -201,9 +215,54 @@ void BfMenu::setServerMessage(bfs::string message)
     setServerMessage_orig(message);
 }
 
+void BfMenu::addToIgnoreList(int playerid)
+{
+    auto& list = getIgnoreList();
+    auto oldsize = list.size();
+
+    addToIgnoreList_orig(playerid);
+
+    // If list was modified
+    if (oldsize != list.size()) {
+        auto player = BFPlayer::getFromID(playerid);
+        if (player) {
+            auto name = ISO88591ToWideString(player->getName());
+            if (name.find('"') == std::wstring::npos) {
+                g_settings.ignorePlayerName(name);
+            }
+        }
+    }
+}
+
+void BfMenu::removeFromIgnoreList(int playerid)
+{
+    // If not called from chat.removeFromIgnoreList, just execute the original function
+    if ((uintptr_t)_ReturnAddress() != 0x00418DE4) {
+        removeFromIgnoreList_orig(playerid);
+    }
+    else {
+        // Called from chat.removeFromIgnoreList
+        auto& list = getIgnoreList();
+        auto oldsize = list.size();
+
+        removeFromIgnoreList_orig(playerid);
+
+        // If list was modified
+        if (oldsize != list.size()) {
+            auto player = BFPlayer::getFromID(playerid);
+            if (player) {
+                auto name = ISO88591ToWideString(player->getName());
+                if (name.find('"') == std::wstring::npos) {
+                    g_settings.unignorePlayerName(name);
+                }
+            }
+        }
+    }
+}
+
 std::map<std::string, uint32_t, StringCompareNoCase> customBuddyColors;
 
-void setBuddyColor(std::string name, uint32_t color)
+void setBuddyColor(std::string name, uint32_t color, bool save)
 {
     // SimpleIni can't handle quotes in keys
     if (name.find('"') != std::string::npos) {
@@ -216,8 +275,11 @@ void setBuddyColor(std::string name, uint32_t color)
         customBuddyColors.erase(name);
         color = InvalidColor;
     }
-    g_settings.setBuddyColor(ISO88591ToWideString(name), color);
-    g_settings.save(false);
+
+    if (save) {
+        g_settings.setBuddyColor(ISO88591ToWideString(name), color);
+        g_settings.save(false);
+    }
 }
 
 // Checks if a playerid is a buddy and returns its buddy color and a boolean.
@@ -294,7 +356,7 @@ void meme::BfMap::onAddBuddyButtonClicked(int selectedPlayerid)
         BFPlayer* player = BFPlayer::getFromID(selectedPlayerid);
         if (player) {
             auto& name = player->getName();
-            setBuddyColor(name, newcolor);
+            setBuddyColor(name, newcolor, true);
         }
 
     }
@@ -441,6 +503,8 @@ void ui_hook_init()
     setCenterKillMessage_orig = (uintptr_t)hook_function(setCenterKillMessage_orig, 5, method_to_voidptr(&BfMenu::setCenterKillMessage_hook));
     addRadioChatMessage_orig = (uintptr_t)hook_function(addRadioChatMessage_orig, 8, method_to_voidptr(&BfMenu::addRadioChatMessage_hook));
     setServerMessage_addr = (uintptr_t)hook_function(setServerMessage_addr, 5, method_to_voidptr(&BfMenu::setServerMessage));
+    addToIgnoreList_addr = (uintptr_t)hook_function(addToIgnoreList_addr, 10, method_to_voidptr(&BfMenu::addToIgnoreList));
+    removeFromIgnoreList_addr = (uintptr_t)hook_function(removeFromIgnoreList_addr, 9, method_to_voidptr(&BfMenu::removeFromIgnoreList));
 
     isPlayerIDInBuddyList_orig = (uintptr_t)hook_function(isPlayerIDInBuddyList_orig, 6, method_to_voidptr(&meme::BfMap::isPlayerIDInBuddyList_hook));
 

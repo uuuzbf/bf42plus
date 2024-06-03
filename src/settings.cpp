@@ -14,7 +14,7 @@ inline void StringSetting::load(const CSimpleIni& ini)
 inline void StringSetting::save(CSimpleIni& ini)
 {
     if (dirty) {
-        ini.SetValue(section, name, value.c_str(), comment);
+        ini.SetValue(section, name, value.c_str(), comment, true);
         dirty = false;
     }
 }
@@ -29,7 +29,7 @@ inline void BoolSetting::save(CSimpleIni& ini)
     if (dirty) {
         // SetBoolValue uses true/false, use SetValue with on/off instead because it's less programmer-y
         // GetBoolValue supports various boolean strings including on/off
-        ini.SetValue(section, name, value ? L"on" : L"off", comment);
+        ini.SetValue(section, name, value ? L"on" : L"off", comment, true);
         dirty = false;
     }
 }
@@ -42,7 +42,7 @@ inline void IntSetting::load(const CSimpleIni& ini)
 inline void IntSetting::save(CSimpleIni& ini)
 {
     if (dirty) {
-        ini.SetLongValue(section, name, value, comment);
+        ini.SetLongValue(section, name, value, comment, false, true);
         dirty = false;
     }
 }
@@ -65,7 +65,7 @@ void ColorSetting::load(const CSimpleIni& ini)
 void ColorSetting::save(CSimpleIni& ini)
 {
     if (dirty) {
-        ini.SetValue(section, name, ISO88591ToWideString(GetStringFromColor(value)).c_str(), comment);
+        ini.SetValue(section, name, ISO88591ToWideString(GetStringFromColor(value)).c_str(), comment, true);
     }
 }
 
@@ -98,13 +98,14 @@ void ColorListSetting::load(const CSimpleIni& ini)
 void ColorListSetting::save(CSimpleIni& ini)
 {
     if (dirty) {
-        ini.SetValue(section, name, ISO88591ToWideString(GetStringFromColors(value)).c_str(), comment);
+        ini.SetValue(section, name, ISO88591ToWideString(GetStringFromColors(value)).c_str(), comment, true);
     }
 }
 
 Settings::Settings()
 {
     ini.SetQuotes(true);
+    ini.SetMultiKey(true);
 
     settings = {
         &showConnectsInChat,
@@ -175,13 +176,19 @@ bool Settings::load()
             for (auto& name : names) {
                 uint32_t color = GetColorFromString(WideStringToISO88591(ini.GetValue(L"buddycolors", name.pItem, L"")));
                 if (color != InvalidColor) {
-                    ::setBuddyColor(WideStringToISO88591(name.pItem), color);
+                    ::setBuddyColor(WideStringToISO88591(name.pItem), color, false);
                 }
                 else {
                     debuglog("buddycolor: '%ls' invalid in config, ignoring\n", name.pItem);
                 }
             }
         }
+    }
+    if (!ini.SectionExists(L"ignorelist")) {
+        // Section missing, create an empty one with some comments
+        ini.SetValue(L"ignorelist", 0, 0,
+            L"; This section contains the list of players you ignored");
+        needToSaveNewSettings = true;
     }
 
     if (needToSaveNewSettings) {

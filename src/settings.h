@@ -69,10 +69,33 @@ public:
     // Store a buddy color in the settings file.
     // Buddy colors are stored in a separate [buddycolors] section.
     // If color is set to InvalidColor, the entry is removed for the given player name.
-    void setBuddyColor(std::wstring name, uint32_t color) {
-        if (color != InvalidColor) ini.SetValue(L"buddycolors", name.c_str(), ISO88591ToWideString(GetStringFromColor(color)).c_str());
+    void setBuddyColor(const std::wstring& name, uint32_t color) {
+        if (color != InvalidColor) ini.SetValue(L"buddycolors", name.c_str(), ISO88591ToWideString(GetStringFromColor(color)).c_str(), 0, true);
         else ini.Delete(L"buddycolors", name.c_str(), false);
     };
+
+    void ignorePlayerName(const std::wstring& name) {
+        if (!isPlayerNameIgnored(name)) {
+            ini.SetValue(L"ignorelist", L"name", name.c_str(), 0, false);
+            save(true);
+        }
+    };
+    void unignorePlayerName(const std::wstring& name) {
+        ini.DeleteValue(L"ignorelist", L"name", name.c_str());
+        save(true);
+    };
+    bool isPlayerNameIgnored(const std::wstring& name) {
+        std::list <CSimpleIni::Entry> values;
+        if (ini.GetAllValues(L"ignorelist", L"name", values)) {
+            for (auto& value : values) {
+                if (_wcsicmp(name.c_str(), value.pItem) == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
     BoolSetting showConnectsInChat = {
         L"general", L"showConnectsInChat",
         L"; Show a message in the status chat when a player connects to the server",

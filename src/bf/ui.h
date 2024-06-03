@@ -48,6 +48,7 @@ public:
     static BFPlayer* getLocalPlayer();
     bool isInitialized() { return ((bool*)this)[0x17d]; };
     meme::BfMap* getMap() { return *(meme::BfMap**)((intptr_t)this + 0x6E4); };
+    bfs::list<int>& getIgnoreList() { return *(bfs::list<int>*)((uintptr_t)this + 0x834); };
 
     bfs::wstring* stringToWide(bfs::wstring* out, const bfs::string* in) noexcept;
     void addGameInfoMessage(bfs::wstring message, int team) noexcept;
@@ -65,12 +66,15 @@ public:
     void setInfoMessage(bfs::string message) noexcept; // accepts a locale key, if not found the string is displayed
     void setServerMessage_orig(bfs::string message) noexcept;
     void setServerMessage(bfs::string message);
-
+    void addToIgnoreList_orig(int playerid) noexcept;
+    void addToIgnoreList(int playerid);
+    void removeFromIgnoreList_orig(int playerid) noexcept;
+    void removeFromIgnoreList(int playerid);
 };
 
 // Set a buddy's color. The player already has to be on the game's buddy list.
 // Set color to InvalidColor to remove/set to default.
-void setBuddyColor(std::string name, uint32_t color);
+void setBuddyColor(std::string name, uint32_t color, bool save);
 void chatMessage(std::string message, bool status = false, int team = 0);
 
 void ui_hook_init();

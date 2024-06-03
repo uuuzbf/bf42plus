@@ -2,6 +2,7 @@
 
 static int currentMessagePlayerID = -1;
 static int currentMessageSecondaryPlayerID = -1;
+static bool dataBaseCompleteEventReceived = false;
 
 static uintptr_t getNextRcvdEvent_orig = 0x004B34B0;
 __declspec(naked) GameEvent* GameEventManager::getNextRcvdEvent()
@@ -20,20 +21,11 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
     GameEvent* event = getNextRcvdEvent();
     if (!event) return 0;
 
-    static bool dataBaseCompleteEventReceived = false;
 
     switch (event->getType()) {
         case BF_CreatePlayerEvent: {
             auto ev = reinterpret_cast<CreatePlayerEvent*>(event);
             currentMessagePlayerID = ev->playerID;
-            // do not output messages while downloading the database
-            if (dataBaseCompleteEventReceived && g_settings.showConnectsInChat) {
-                auto message = std::string(ev->name) + " connecting";
-                /*if (ev->team == 1 || ev->team == 2) {
-                    message += ev->team == 1 ? " (axis)" : " (allied)";
-                }*/
-                chatMessage(message, true, ev->team);
-            }
             break;
         }
         case BF_DataBaseCompleteEvent: {
@@ -109,10 +101,46 @@ ignore_event:
     return getNextRcvdEvent_hook();
 }
 
+// This callback is called when the client finished
+// processing a CreatePlayerEvent from the server.
+static void __stdcall GameClientOnPlayerCreated(BFPlayer* player)
+{
+    bool isIgnored = false;
+
+    if (g_settings.isPlayerNameIgnored(ISO88591ToWideString(player->getName()))) {
+        BfMenu::getSingleton()->addToIgnoreList_orig(player->getId());
+        isIgnored = true;
+    }
+
+    // do not output messages while downloading the database
+    if (dataBaseCompleteEventReceived && g_settings.showConnectsInChat) {
+        auto message = std::string(player->getName()) + " connecting";
+        if (isIgnored) message += " [ignored]";
+        chatMessage(message, true, player->getTeam());
+    }
+    else {
+        if (isIgnored) {
+            auto message = "Player " + std::string(player->getName()) + " auto-ignored";
+            if (dataBaseCompleteEventReceived) chatMessage(message, true, 0);
+            else BfMenu::getSingleton()->outputConsole(message);
+        }
+    }
+}
+
+static void patch_GameClient_player_created_callback()
+{
+    BEGIN_ASM_CODE(a)
+        push ebp
+        mov eax, GameClientOnPlayerCreated
+        call eax
+    MOVE_CODE_AND_ADD_CODE(a, 0x00493B07, 5, HOOK_ADD_ORIGINAL_AFTER);
+}
 
 void gameevent_hook_init()
 {
     getNextRcvdEvent_orig = (uintptr_t)hook_function(getNextRcvdEvent_orig, 6, method_to_voidptr(&GameEventManager::getNextRcvdEvent_hook));
+
+    patch_GameClient_player_created_callback();
 }
 
 int getCurrentMessagePID()

@@ -253,7 +253,7 @@ public:
     virtual bool isObjectActive() const { return true; };
     virtual void* executeObjectMethod() {
         if (argcount == 2) {
-            setBuddyColor(buddyname, args[1]);
+            setBuddyColor(buddyname, args[1], true);
         }
         hasreturnvalue = false;
         return 0;
