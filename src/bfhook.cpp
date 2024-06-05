@@ -470,7 +470,5 @@ void bfhook_init()
 
     patch_install_bf_debug_callback_handler();
 
-    trace_function_fastcall(0x00583A20, 5, function_tracer_fastcall, "?S1i2i3i4:File__open");
-
     dynbuffer_make_nonwritable();
 }
