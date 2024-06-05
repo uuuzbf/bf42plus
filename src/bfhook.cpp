@@ -67,6 +67,23 @@ void patch_screen_resolution_fixes()
     // menu resolution patch from https://team-simple.org/forum/viewtopic.php?id=7928 / https://bfmods.com/viewtopic.php?f=9&t=47957
     // this is already present in henk's latest patched exe but not everybody uses that
     patchBytes(0x0045DD69, { 0xE8, 0x02, 0x34, 0x25, 0x00 });
+
+    // Add extra code when "invalid videomode specified" error is about to occur and
+    // try to recover from it by selecting an usable screen resolution.
+    BEGIN_ASM_CODE(b)
+        mov eax, tryRecoverFromInvalidScreenResolution
+        push [esp+0x1d8] // DisplaySettings* specifiedVideoMode
+        push esi // RendPCDX8* this
+        call eax
+        test al,al
+        jz continue_to_error // if returned false, give up
+        // call RendPCDX8::getDisplaySettingID(DisplaySettings*) again
+        mov ecx, esi
+        push [esp+0x1d8] // DisplaySettings* specifiedVideoMode
+        mov eax, 0x0063F00E
+        jmp eax
+    continue_to_error:
+    MOVE_CODE_AND_ADD_CODE(b, 0x0063F018, 5, HOOK_ADD_ORIGINAL_AFTER);
 }
 
 void patch_quicker_server_pinging_on_restart()

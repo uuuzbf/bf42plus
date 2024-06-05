@@ -167,4 +167,8 @@ public:
     NewRendFont* getFont() const { return font; };
 };
 
+// This function is called repeatedly by a hook at CreateDevice if the resolution in
+// the settings cannot be used
+bool __stdcall tryRecoverFromInvalidScreenResolution(void* RendPCDX8, void* videoMode_);
+
 void renderer_hook_init();

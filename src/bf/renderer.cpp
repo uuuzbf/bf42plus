@@ -147,6 +147,120 @@ void install_hook_Renderer_draw_1()
     MOVE_CODE_AND_ADD_CODE(a, 0x004670A5, 5, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+bool __stdcall tryRecoverFromInvalidScreenResolution(void* RendPCDX8, void* videoMode_)
+{
+    struct DisplaySettings {
+        int width, height, depth, refreshrate;
+        bool windowed;
+        bool operator==(const DisplaySettings& r) const {
+            return width == r.width && height == r.height && depth == r.depth && refreshrate == r.refreshrate;
+        };
+    };
+    auto videoMode = (DisplaySettings*)videoMode_;
+
+    auto numDisplaySettings = *(size_t*)((uintptr_t)RendPCDX8 + 0xAC);
+    auto availableDisplaySettings = *(DisplaySettings**)((uintptr_t)RendPCDX8 + 0xA8);
+
+    static int attempts = 1;
+
+    debuglogt("tryRecoverFromInvalidScreenResolution called, attempt %d, invalid: %dx%dx%d@%d\n", attempts, videoMode->width, videoMode->height, videoMode->depth, videoMode->refreshrate);
+
+    switch (attempts++) {
+        case 1: { // List available resolutions and try to use desktop resolution
+            DEVMODEA mode = { 0 };
+            mode.dmSize = sizeof(DEVMODE);
+            bool found = false, error = false;
+
+            // Get desktop resolution and store it as the target resolution
+            if (EnumDisplaySettingsA(0, ENUM_CURRENT_SETTINGS, &mode)) {
+                videoMode->width = mode.dmPelsWidth + 54;
+                videoMode->height = mode.dmPelsHeight;
+                videoMode->depth = mode.dmBitsPerPel;
+                videoMode->refreshrate = mode.dmDisplayFrequency;
+                videoMode->windowed = 0;
+            }
+            else {
+                debuglog("  EnumDisplaySettings error: %08X", GetLastError());
+                error = true;
+            }
+
+            debuglog("  have %zu available resolutions:", numDisplaySettings);
+            for (size_t i = 0; i < numDisplaySettings; i++) {
+                auto& res = availableDisplaySettings[i];
+                debuglog(" %dx%dx%d@%d", res.width, res.height, res.depth, res.refreshrate);
+
+                if (res == *videoMode) {
+                    found = true;
+                }
+            }
+            debuglog("\n");
+
+            if (found) {
+                debuglog("  selected: %dx%dx%d@%d (desktop resolution)\n", videoMode->width, videoMode->height, videoMode->depth, videoMode->refreshrate);
+                return true;
+            }
+            else if (!error) {
+                debuglog("  desktop resolution %dx%dx%d@%d was not found in list\n", videoMode->width, videoMode->height, videoMode->depth, videoMode->refreshrate);
+            }
+            [[fallthrough]];
+        }
+        case 2: { // Pick a resolution from the list of available resolutions
+            int highestAreaW = 0, highestAreaH = 0, highestArea = 0;
+            int highestBitdepth = 0;
+            // Find highest resolution and bit depth
+            for (size_t i = 0; i < numDisplaySettings; i++) {
+                auto& res = availableDisplaySettings[i];
+
+                // Don't use too high resolutions
+                if (res.width > 1920) continue;
+
+                auto area = res.width * res.height;
+                if (area > highestArea) {
+                    highestArea = area, highestAreaW = res.width, highestAreaH = res.height;
+                }
+                if (res.depth > highestBitdepth) {
+                    highestBitdepth = res.depth;
+                }
+            }
+
+            debuglog("  highest refresh rate and bitdepth: %dx%dx%d\n", highestAreaW, highestAreaH, highestBitdepth);
+
+            int idx60Hz = -1, idxHighestRefresh = -1, highestRefresh = -1;
+            // Find indices for the above parameters where the refresh rate is 60Hz and where it is the highest
+            for (size_t i = 0; i < numDisplaySettings; i++) {
+                auto& res = availableDisplaySettings[i];
+
+                if (res.width == highestAreaW && res.height == highestAreaH && res.depth == highestBitdepth) {
+                    if (res.refreshrate == 60) idx60Hz = i;
+                    if (highestRefresh < res.refreshrate) {
+                        highestRefresh = res.refreshrate;
+                        idxHighestRefresh = i;
+                    }
+                }
+            }
+
+            // Try using highest resolution with highest bitdepth
+            // First with 60Hz refresh rate
+            if (idx60Hz != -1) {
+                *videoMode = availableDisplaySettings[idx60Hz];
+                debuglog("  selected 60Hz refresh rate\n");
+                return true;
+            }
+            // Otherwise, highest available refresh rate
+            if (idxHighestRefresh != -1) {
+                *videoMode = availableDisplaySettings[idxHighestRefresh];
+                debuglog("  selected %dHz refresh rate\n", highestRefresh);
+                return true;
+            }
+            [[fallthrough]];
+        }
+        default: // Out of options, fail
+            return false;
+    }
+
+    // unreachable
+}
+
 void renderer_hook_init()
 {
     drawDebugText_addr = (uintptr_t)hook_function(drawDebugText_addr, 5, method_to_voidptr(&Renderer::drawDebugText));
