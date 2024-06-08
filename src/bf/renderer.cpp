@@ -52,12 +52,20 @@ __declspec(naked) bool convertWorldPosToScreenPos(Vec3& output, const Vec3& inpu
     }
 }
 
+bool isPositionOnScreen(float x, float y) {
+    // Get viewport size from RendPCDX8's D3DVIEWPORT
+    void* rend = *(void**)0x009A99D4;
+    if (!rend) return false;
+    auto vpSize = (DWORD*)((uintptr_t)rend + 0x7C);
+    return x >= 0 && y >= 0 && x <= vpSize[0] && y <= vpSize[1];
+}
+
 inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPosition, const bfs::string& text, int maxDistance, uint32_t color, NewRendFont* font)
 {
     float distance = (position - playerPosition).lengthSquare();
     if (distance < maxDistance * maxDistance) {
         Vec3 screenPos;
-        if (convertWorldPosToScreenPos(screenPos, position)) {
+        if (convertWorldPosToScreenPos(screenPos, position) && isPositionOnScreen(screenPos.x, screenPos.y)) {
             distance = sqrtf(distance);
             // alpha range: 60-255
             uint32_t alpha = (maxDistance - distance) * ((255.0 - 60.0) / maxDistance) + 60.0;
@@ -69,6 +77,38 @@ inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPositio
             font->drawText(screenPos.x - font->getStringWidth(diststr) / 2, screenPos.y - font->getHeight(), diststr);
         }
     }
+}
+
+// These functions can be used to render only the closest visible item of several
+
+struct PreparedMapItem {
+    float distanceSquared;
+    Vec3 screenPos;
+};
+inline static void prepareClosest3DMapItem(PreparedMapItem& out, const Pos3& position, const Pos3& playerPosition, int maxDistance)
+{
+    float distance = (position - playerPosition).lengthSquare();
+    if (distance < maxDistance * maxDistance) {
+        Vec3 screenPos;
+        if (convertWorldPosToScreenPos(screenPos, position) && isPositionOnScreen(screenPos.x, screenPos.y)) {
+            if (out.distanceSquared == 0 || out.distanceSquared > distance) {
+                out.distanceSquared = distance;
+                out.screenPos = screenPos;
+            }
+        }
+    }
+}
+inline static void drawClosest3DMapItem(const PreparedMapItem& item, const bfs::string& text, int maxDistance, uint32_t color, NewRendFont* font)
+{
+    float distance = sqrtf(item.distanceSquared);
+    // alpha range: 60-255
+    uint32_t alpha = (maxDistance - distance) * ((255.0 - 60.0) / maxDistance) + 60.0;
+
+    font->setColor(color | (alpha << 24));
+
+    font->drawText(item.screenPos.x - font->getStringWidth(text) / 2, item.screenPos.y, text);
+    bfs::string diststr = std::format("{}m", (int)distance);
+    font->drawText(item.screenPos.x - font->getStringWidth(diststr) / 2, item.screenPos.y - font->getHeight(), diststr);
 }
 
 void hook_Renderer_draw_1()
@@ -103,6 +143,10 @@ void hook_Renderer_draw_1()
         static SupplyDepot_m_t SupplyDepot_isRepairing = (SupplyDepot_m_t)0x005431B0;
         static SupplyDepot_m_t SupplyDepot_isReloading = (SupplyDepot_m_t)0x005431E0;
 
+        PreparedMapItem repair{}, ammo{}, heal{};
+
+        const auto maxDistance = g_serverSettings.supplyDepot3DMap.distance;
+
         auto supplyDepots = ObjectManager_getSupplyDepotMap();
         for (auto node = supplyDepots.head->left; node != supplyDepots.head; node = node->next()) {
             auto supplyDepot = node->pair.second;
@@ -116,21 +160,20 @@ void hook_Renderer_draw_1()
 
             // The order of these checks matters, repair pads are visible as reload and heal points too for some reason
             if (SupplyDepot_isRepairing(supplyDepot)) {
-                description = "*REPAIR*";
-                color = 0x000080;
+                prepareClosest3DMapItem(repair, supplyDepot->getAbsolutePosition(), playerPos, maxDistance);
             }
             else if (SupplyDepot_isReloading(supplyDepot)) {
-                description = "*AMMO*";
-                color = 0x006400;
+                prepareClosest3DMapItem(ammo, supplyDepot->getAbsolutePosition(), playerPos, maxDistance);
             }
             else if (SupplyDepot_isHealing(supplyDepot)) {
-                description = "*HEAL*";
-                color = 0xDC143C;
+                prepareClosest3DMapItem(heal, supplyDepot->getAbsolutePosition(), playerPos, maxDistance);
             }
             else continue;
-
-            draw3DMapItem(supplyDepot->getAbsolutePosition(), playerPos, description, g_serverSettings.supplyDepot3DMap.distance, color, font);
         }
+
+        if (repair.distanceSquared != 0) drawClosest3DMapItem(repair, "*REPAIR*", maxDistance, 0x000080, font);
+        if (ammo.distanceSquared != 0) drawClosest3DMapItem(ammo, "*AMMO*", maxDistance, 0x006400, font);
+        if (heal.distanceSquared != 0) drawClosest3DMapItem(heal, "*HEAL*", maxDistance, 0xDC143C, font);
     }
 
     font->setColor(oldcolor);
