@@ -180,7 +180,7 @@ bool __stdcall tryRecoverFromInvalidScreenResolution(void* RendPCDX8, void* vide
                 videoMode->windowed = 0;
             }
             else {
-                debuglog("  EnumDisplaySettings error: %08X", GetLastError());
+                debuglog("  EnumDisplaySettings error: %08X\n", GetLastError());
                 error = true;
             }
 
