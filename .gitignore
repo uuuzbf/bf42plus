@@ -6,6 +6,8 @@ src/gitversion.h
 Release*.7z
 *.aps
 
+/*.cpp
+
 # Prerequisites
 *.d
 
