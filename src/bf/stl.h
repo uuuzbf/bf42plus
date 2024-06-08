@@ -26,7 +26,9 @@ namespace bfs
         string(size_t count, char c);
         string();
 
-        string(std::string const& str) : string(str.data(), str.size()) {  };
+        string(std::string const& str) : string(str.data(), str.size()) {};
+
+        string(const std::string_view& view) : string(view.data(), view.size()) {};
 
         ~string();
 

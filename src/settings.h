@@ -161,3 +161,36 @@ public:
 };
 
 extern Settings g_settings;
+
+
+class ServerSettings {
+public:
+    struct Mine3DMap {
+        bool allow = false;
+        int distance = 30;
+        uint32_t color = 0xff1493;
+        bfs::string text = "*MINE*";
+    } mine3DMap;
+
+    struct SupplyDepot3DMap {
+        bool allow = false;
+        int distance = 65;
+    } supplyDepot3DMap;
+
+    struct Custom3DMap {
+        bfs::string templateName;
+        bfs::string text;
+        int distance;
+        uint32_t color;
+    };
+    std::list<Custom3DMap> custom3DMaps;
+
+    struct SUI {
+        bool openSpawnScreenOnDeath = true;
+        bool openSpawnScreenOnJoin = true;
+    } UI;
+
+    void parseFromText(const char* text);
+};
+
+extern ServerSettings g_serverSettings;

@@ -92,6 +92,11 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
             }
             break;
         }
+        case BF_WelcomeMsgEvent: {
+            auto ev = reinterpret_cast<WelcomeMsgEvent*>(event);
+            g_serverSettings.parseFromText(ev->message);
+            break;
+        }
     }
     return event;
 

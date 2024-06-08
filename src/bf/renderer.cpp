@@ -52,7 +52,7 @@ __declspec(naked) bool convertWorldPosToScreenPos(Vec3& output, const Vec3& inpu
     }
 }
 
-inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPosition, const bfs::string& description, const float maxDistance, uint32_t color, NewRendFont* font)
+inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPosition, const bfs::string& text, int maxDistance, uint32_t color, NewRendFont* font)
 {
     float distance = (position - playerPosition).lengthSquare();
     if (distance < maxDistance * maxDistance) {
@@ -64,7 +64,7 @@ inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPositio
 
             font->setColor(color | (alpha << 24));
 
-            font->drawText(screenPos.x - font->getStringWidth(description) / 2, screenPos.y, description);
+            font->drawText(screenPos.x - font->getStringWidth(text) / 2, screenPos.y, text);
             bfs::string diststr = std::format("{}m", (int)distance);
             font->drawText(screenPos.x - font->getStringWidth(diststr) / 2, screenPos.y - font->getHeight(), diststr);
         }
@@ -83,20 +83,19 @@ void hook_Renderer_draw_1()
     auto localPlayer = BFPlayer::getLocal();
     Pos3 playerPos = localPlayer->getVehicle()->getAbsolutePosition();
 
-    if (g_settings.enable3DMineMap) {
-
-
+    if (g_settings.enable3DMineMap && g_serverSettings.mine3DMap.allow) {
         auto projectiles = ObjectManager_getProjectileMap();
         for (auto node = projectiles.head->left; node != projectiles.head; node = node->next()) {
             auto proj = node->pair.second;
             // this compares teams... 
             if (*(int*)((intptr_t)proj + 0x144) == localPlayer->getTeam()) {
-                draw3DMapItem(proj->getAbsolutePosition(), playerPos, "*MINE*", 65.0, 0xff1493, font);
+                draw3DMapItem(proj->getAbsolutePosition(), playerPos, g_serverSettings.mine3DMap.text,
+                    g_serverSettings.mine3DMap.distance, g_serverSettings.mine3DMap.color, font);
             }
         }
     }
 
-    if (g_settings.enable3DSupplyMap) {
+    if (g_settings.enable3DSupplyMap && g_serverSettings.supplyDepot3DMap.allow) {
         // very hacky way to call some SupplyDepot members
         // move these into a SupplyDepot class when there is one
         typedef bool(__fastcall* SupplyDepot_m_t)(IObject*);
@@ -130,7 +129,7 @@ void hook_Renderer_draw_1()
             }
             else continue;
 
-            draw3DMapItem(supplyDepot->getAbsolutePosition(), playerPos, description, 65.0, color, font);
+            draw3DMapItem(supplyDepot->getAbsolutePosition(), playerPos, description, g_serverSettings.supplyDepot3DMap.distance, color, font);
         }
     }
 

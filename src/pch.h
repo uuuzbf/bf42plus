@@ -19,6 +19,7 @@
 #include <float.h>
 #include <initializer_list>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <list>
 #include <array>

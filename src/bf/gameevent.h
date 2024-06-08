@@ -6,6 +6,7 @@ enum GameEventID {
     BF_CreatePlayerEvent = 0x08,
     BF_DestroyPlayerEvent = 0x0C,
     BF_VoteEvent = 0x12,
+    BF_WelcomeMsgEvent = 0x17,
     BF_GameStatusEvent = 0x24,
     BF_ChatFragmentEvent = 0x28,
     BF_ScoreMsgEvent = 0x2a,
@@ -170,6 +171,17 @@ public:
     uint8_t nextMapModnameLength;
     char nextMapModname[32];
 };
+
+static_assert(sizeof(GameStatusEvent) == 0x33);
+
+class WelcomeMsgEvent : GameEvent {
+public:
+    int32_t id;
+    char message[64];
+    uint32_t length;
+};
+
+static_assert(sizeof(WelcomeMsgEvent) == 0x54);
 
 #pragma pack(pop)
 
