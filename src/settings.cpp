@@ -120,6 +120,7 @@ Settings::Settings()
         &correctedLookSensitivity,
         &enable3DMineMap,
         &enable3DSupplyMap,
+        &enable3DControlPointMap,
         &crashCreateFullDump,
         &crashDumpsToKeep,
     };

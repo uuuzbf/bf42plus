@@ -1,6 +1,6 @@
 #include "../pch.h"
 
-__declspec(naked) bfs::map<unsigned int, IObject*> ObjectManager_getProjectileMap()
+__declspec(naked) bfs::map<unsigned int, IObject*>& ObjectManager_getProjectileMap()
 {
     _asm {
         mov ecx, 0x0097D764
@@ -10,13 +10,23 @@ __declspec(naked) bfs::map<unsigned int, IObject*> ObjectManager_getProjectileMa
     }
 }
 
-__declspec(naked) bfs::map<unsigned int, IObject*> ObjectManager_getSupplyDepotMap()
+__declspec(naked) bfs::map<unsigned int, IObject*>& ObjectManager_getSupplyDepotMap()
 {
     _asm {
         mov ecx, 0x0097D764
         mov ecx, [ecx] // pObjectManager
         mov eax, [ecx]
         jmp [eax+0xB0] // ->getSupplyDepotMap()
+    }
+}
+
+__declspec(naked) bfs::vector<IObject*>& ObjectManager_getControlPointVector()
+{
+    _asm {
+        mov ecx, 0x0097D764
+        mov ecx, [ecx] // pObjectManager
+        mov eax, [ecx]
+        jmp [eax+0x7C] // ->getControlPointVector()
     }
 }
 

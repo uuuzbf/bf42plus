@@ -208,4 +208,32 @@ namespace bfs
 
         bool empty() const { return head->left == head; };
     };
+
+    template<class Tv>
+    class vector {
+    public:
+        class iterator {
+            Tv* ptr;
+        public:
+            Tv& operator*() { return *ptr; };
+            iterator& operator++() { ++ptr; return *this; };
+            iterator& operator++(int) { iterator tmp = *this; ++*this; return tmp; };
+            iterator& operator--() { --ptr; return *this; };
+            iterator& operator--(int) { iterator tmp = *this; --*this; return tmp; };
+            size_t operator-(const iterator& right) const { return ptr - right.ptr; };
+            bool operator==(const iterator& right) const { return ptr == right.ptr; };
+
+        };
+        iterator begin() { return _first; };
+        iterator end() { return _last; };
+        size_t size() { _first == 0 ? 0 : _last - _first; };
+        Tv& at(size_t index) { assert(index < size()); return *(_first + index); };
+        const Tv& operator[](size_t index) const { return *(_first + index); };
+        Tv& operator[](size_t index) { return *(_first + index); };
+    protected:
+        uint32_t allocator;
+        iterator _first;
+        iterator _last;
+        iterator _end;
+    };
 }

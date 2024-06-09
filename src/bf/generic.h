@@ -130,5 +130,12 @@ uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str);
 // terminator is also appended, outputHexString must be atleast 33 bytes.
 void __fastcall MD5Digest(const void* data, unsigned int length, char* outputHexString);
 
+// Calls Locale::getAnsiLocale
+void __stdcall getAnsiLocale(bfs::string& out, const bfs::string& key);
+
+// Calls Locale::getWideLocale
+void __stdcall getWideLocale(bfs::wstring& out, const bfs::string& key);
+
+
 
 void generic_hook_init();

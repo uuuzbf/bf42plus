@@ -55,6 +55,24 @@ __declspec(naked) void __fastcall MD5Digest(const void* data, unsigned int lengt
     _asm jmp eax
 }
 
+__declspec(naked) void __stdcall getAnsiLocale(bfs::string& out, const bfs::string& key)
+{
+    _asm {
+        mov ecx, 0x009A2170
+        mov eax, 0x00581520
+        jmp eax
+    }
+}
+
+__declspec(naked) void __stdcall getWideLocale(bfs::wstring& out, const bfs::string& key)
+{
+    _asm {
+        mov ecx, 0x009A2170
+        mov eax, 0x005815B0
+        jmp eax
+    }
+}
+
 static uintptr_t addPlayerInput_addr = 0x0040ECB0;
 __declspec(naked) void Game::addPlayerInput_orig(int playerid, PlayerInput* input) noexcept
 {

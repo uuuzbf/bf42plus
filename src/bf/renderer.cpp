@@ -124,7 +124,7 @@ void hook_Renderer_draw_1()
     Pos3 playerPos = localPlayer->getVehicle()->getAbsolutePosition();
 
     if (g_settings.enable3DMineMap && g_serverSettings.mine3DMap.allow) {
-        auto projectiles = ObjectManager_getProjectileMap();
+        auto& projectiles = ObjectManager_getProjectileMap();
         for (auto node = projectiles.head->left; node != projectiles.head; node = node->next()) {
             auto proj = node->pair.second;
             // this compares teams... 
@@ -147,7 +147,7 @@ void hook_Renderer_draw_1()
 
         const auto maxDistance = g_serverSettings.supplyDepot3DMap.distance;
 
-        auto supplyDepots = ObjectManager_getSupplyDepotMap();
+        auto& supplyDepots = ObjectManager_getSupplyDepotMap();
         for (auto node = supplyDepots.head->left; node != supplyDepots.head; node = node->next()) {
             auto supplyDepot = node->pair.second;
 
@@ -174,6 +174,45 @@ void hook_Renderer_draw_1()
         if (repair.distanceSquared != 0) drawClosest3DMapItem(repair, "*REPAIR*", maxDistance, 0x000080, font);
         if (ammo.distanceSquared != 0) drawClosest3DMapItem(ammo, "*AMMO*", maxDistance, 0x006400, font);
         if (heal.distanceSquared != 0) drawClosest3DMapItem(heal, "*HEAL*", maxDistance, 0xDC143C, font);
+    }
+
+    if (g_settings.enable3DControlPointMap && g_serverSettings.controlPoint3DMap.allow) {
+        const float scale = 0.75;
+        font->setScale(scale, scale);
+        auto& controlPoints = ObjectManager_getControlPointVector();
+        for (auto it = controlPoints.begin(); it != controlPoints.end(); it++) {
+            auto controlPoint = *it;
+            auto tmpl = controlPoint->getTemplate();
+
+            int team = *(int*)((uintptr_t)controlPoint + 0x190);
+            uint32_t color = team == 0 ? 0x777777 : team == 1 ? 0xFF0000 : 0x0000FF;
+
+            Vec3 screenPos;
+            auto position = controlPoint->getAbsolutePosition() + Vec3(0, 10, 0);
+            float radius = *(float*)((uintptr_t)tmpl + 0x2c8);
+            const int minDistance = radius * 4;
+
+            float distance = (position - playerPos).lengthSquare();
+            if (distance > minDistance * minDistance) {
+                if (convertWorldPosToScreenPos(screenPos, position) && isPositionOnScreen(screenPos.x, screenPos.y)) {
+                    distance = sqrtf(distance);
+                    // alpha range: 60-180
+                    uint32_t alpha = (distance - minDistance) * ((130.0 - 60.0) / minDistance) + 60.0;
+                    if (alpha > 130) alpha = 130;
+
+                    auto& controlPointName = *(bfs::string*)((uintptr_t)tmpl + 0x2D0);
+                    bfs::string localizedName;
+                    getAnsiLocale(localizedName, controlPointName);
+
+                    font->setColor(color | (alpha << 24));
+                    float sx = floor(screenPos.x), sy = floor(screenPos.y);
+                    font->drawText(sx - font->getStringWidth(localizedName) * scale / 2, sy, localizedName);
+                    bfs::string diststr = std::format("{}m", (int)distance);
+                    font->drawText(sx - font->getStringWidth(diststr) * scale / 2, sy - font->getHeight() * scale, diststr);
+                }
+            }
+        }
+        font->setScale(1.0, 1.0);
     }
 
     font->setColor(oldcolor);

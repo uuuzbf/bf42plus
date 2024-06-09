@@ -144,11 +144,15 @@ public:
         0, false };
     BoolSetting enable3DMineMap = {
         L"general", L"enable3DMineMap",
-        L"; Enable 3D map showing friendly mines. This is a temporary option.",
+        L"; Enable 3D map showing friendly mines. In multiplayer it is only enabled if the server allows it.",
         0, false };
     BoolSetting enable3DSupplyMap = {
         L"general", L"enable3DSupplyMap",
-        L"; Enable 3D map showing heal, ammo, repair points. This is a temporary option.",
+        L"; Enable 3D map showing heal, ammo, repair points. In multiplayer it is only enabled if the server allows it.",
+        0, false };
+    BoolSetting enable3DControlPointMap = {
+        L"general", L"enable3DControlPointMap",
+        L"; Enable 3D map showing controlpoints. In multiplayer it is only enabled if the server allows it.",
         0, false };
     BoolSetting crashCreateFullDump = {
         L"general", L"crashCreateFullDump",
@@ -176,6 +180,10 @@ public:
         bool allow = false;
         int distance = 65;
     } supplyDepot3DMap;
+
+    struct ControlPoint3DMap {
+        bool allow = false;
+    } controlPoint3DMap;
 
     struct Custom3DMap {
         bfs::string templateName;
