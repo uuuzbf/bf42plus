@@ -551,7 +551,7 @@ void ui_hook_init()
     patch_hook_scoreboard_add_buddy_button();
     patch_optionally_disable_ui_elements();
 
-    trace_function_fastcall(0x006CCE20, 5, function_tracer_fastcall, "?i1:SpawnScreenStuff__setVisible");
+    //trace_function_fastcall(0x006CCE20, 5, function_tracer_fastcall, "SpawnScreenStuff__setVisible");
 
     // Disable original server message outputting to console
     inject_jmp(0x006A88B1, 2, (void*)0x006A88CE, 1);

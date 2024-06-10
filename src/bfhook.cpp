@@ -470,5 +470,7 @@ void bfhook_init()
 
     patch_install_bf_debug_callback_handler();
 
+    trace_function_fastcall(0x004B6FC0, 9, function_tracer_fastcall, "?S1f2:RestartServerPinger__init");
+
     dynbuffer_make_nonwritable();
 }
