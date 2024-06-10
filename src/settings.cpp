@@ -123,6 +123,7 @@ Settings::Settings()
         &enable3DControlPointMap,
         &crashCreateFullDump,
         &crashDumpsToKeep,
+        &fasterMapchange,
     };
 }
 

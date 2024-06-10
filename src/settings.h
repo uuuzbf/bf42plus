@@ -162,6 +162,10 @@ public:
         L"general", L"crashDumpsToKeep",
         L"; Number of crash dumps to keep. Set to 0 to never delete dumps.",
         0, 5 };
+    BoolSetting fasterMapchange = {
+        L"general", L"fasterMapchange",
+        L"; Restart the game faster when the map is changing.",
+        0, true };
 };
 
 extern Settings g_settings;

@@ -441,7 +441,7 @@ void bfhook_init()
     patch_Particle_handleUpdate_crash();
     patch_scoreboard_column_widths();
     patch_screen_resolution_fixes();
-    patch_quicker_server_pinging_on_restart();
+    if(g_settings.fasterMapchange) patch_quicker_server_pinging_on_restart();
     patch_master_address();
     patch_show_version_in_menu();
     patch_empty_maplist();
