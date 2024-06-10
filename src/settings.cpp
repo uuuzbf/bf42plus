@@ -296,8 +296,10 @@ void ServerSettings::parseFromText(const char* text)
             }
             else if (setting == "UI") {
                 while (parseNextParameter(params, key, value)) {
+                    debuglog(" %.*s -> %.*s\n", key.size(), key.data(), value.size(), value.data());
                     if (key == "ssdeath") UI.openSpawnScreenOnDeath = value != "0";
-                    else if (key == "ssjoin") UI.openSpawnScreenOnDeath = value != "0";
+                    else if (key == "ssjoin") UI.openSpawnScreenOnJoin = value != "0";
+                    debuglog(" %i %i\n", UI.openSpawnScreenOnDeath ? 1 : 0, UI.openSpawnScreenOnJoin ? 1 : 0);
                 }
             }
             

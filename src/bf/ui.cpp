@@ -495,6 +495,41 @@ void patch_hook_scoreboard_add_buddy_button()
     inject_call(0x006DFF74, 5, method_to_voidptr(&meme::BfMap::onAddBuddyButtonClicked), 1);
 }
 
+void patch_optionally_disable_ui_elements()
+{
+    // Skip the spawnscreen setVisible call in cbDeActivateInfoMenu if disabled by server
+    // This disables the opening of the spawn screen when joining a server
+    BEGIN_ASM_CODE(a)
+        mov al, g_serverSettings.UI.openSpawnScreenOnJoin
+        test al,al
+        jnz cont
+        mov edx, 0x006D846B
+        jmp edx
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x006D8461, 5, HOOK_ADD_ORIGINAL_AFTER);
+
+    // Skip the spawnscreen setVisible call when we get a DEATH/DEATHNOMSG ScoreMsgEvent for the local player
+    // This disables the opening of the spawn screen when the player dies
+    BEGIN_ASM_CODE(b)
+        mov cl, g_serverSettings.UI.openSpawnScreenOnDeath
+        test cl, cl
+        jnz cont2
+        mov edx, 0x004946D4
+        jmp edx
+    cont2:
+    MOVE_CODE_AND_ADD_CODE(b, 0x004946CA, 5, HOOK_ADD_ORIGINAL_AFTER);
+
+    // Skip calling the function that updates the spawn status text in the top middle, and opens
+    // the spawn screen when the selected spawn is lost, or after a certain timeout
+    BEGIN_ASM_CODE(c)
+        mov al, g_serverSettings.UI.openSpawnScreenOnDeath
+        jnz cont3
+        mov byte ptr [ecx+0x25], 0 // ShowSpawnText = 0
+        mov byte ptr [ecx+0x80], 0 // ShowLostSpawnPoint = 0
+        retn 8
+    cont3:
+    MOVE_CODE_AND_ADD_CODE(c, 0x006CD610, 6, HOOK_ADD_ORIGINAL_AFTER);
+}
 
 void ui_hook_init()
 {
@@ -514,6 +549,9 @@ void ui_hook_init()
     patch_change_scoreboard_buddy_color();
     patch_change_chat_buddy_color();
     patch_hook_scoreboard_add_buddy_button();
+    patch_optionally_disable_ui_elements();
+
+    trace_function_fastcall(0x006CCE20, 5, function_tracer_fastcall, "?i1:SpawnScreenStuff__setVisible");
 
     // Disable original server message outputting to console
     inject_jmp(0x006A88B1, 2, (void*)0x006A88CE, 1);
