@@ -474,6 +474,7 @@ public:
             g_settings.fasterMapchange.dirty = true;
             g_settings.save(false);
             hasreturnvalue = false;
+            needsRestart();
         }
         return 0;
     };
