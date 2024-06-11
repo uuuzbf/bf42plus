@@ -434,6 +434,34 @@ void patch_install_bf_debug_callback_handler()
     for (int i = 0; i < 6; i++) g_debug_callback[i] = (void*)debugcallback;
 }
 
+void patch_add_debug_messages_to_restart_code()
+{
+    static const char* msg = "RestartServerPinger__update returned %d\n";
+    static const char* msg2 = "RestartServerPinger__update sent ping\n";
+    // These patches add extra debug messages to the code that pings the server before map change restart
+    BEGIN_ASM_CODE(a)
+        test eax,eax
+        jz update
+        push eax
+        push msg
+        mov ecx, debuglogt
+        call ecx
+        pop eax
+        pop eax
+    update: // edi = restartServerPinger
+        mov ecx, [edi+8]
+        cmp ecx, [edi+0xc]
+        jnz cont
+        push eax
+        push msg2
+        mov ecx, debuglogt
+        call ecx
+        pop eax
+        pop eax
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x0048FFB6, 7, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -471,6 +499,8 @@ void bfhook_init()
     patch_install_bf_debug_callback_handler();
 
     trace_function_fastcall(0x004B6FC0, 9, function_tracer_fastcall, "?S1f2:RestartServerPinger__init");
+    patch_add_debug_messages_to_restart_code();
+    trace_function_fastcall(0x006B42F0, 5, function_tracer_fastcall, "?i1S2:LoadingScreen__showDisconnectMessage");
 
     dynbuffer_make_nonwritable();
 }
