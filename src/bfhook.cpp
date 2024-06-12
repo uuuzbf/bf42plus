@@ -99,6 +99,18 @@ void patch_quicker_server_pinging_on_restart()
     static float pingInterval = 2.0f; // default 3 sec
     patchBytes(0x004B7000, delayBeforePingingStarts);
     patchBytes(0x004B6F6C, pingInterval);
+
+    // In GameClient::disconnect, when destroying NetClient, steal its UDPSocket and put it in
+    // RestartServerPinger's udpsocket ptr. Also prevent NetClient from destroying the UDPSocket
+    // by nulling another ptr. RestartServerPinger will skip creating one in its init method if
+    // the pointer is already set. This may fix obscure issues where the SERVER_INFO packets sent
+    // or received by RestartServerPinger are lost.
+    BEGIN_ASM_CODE(a)
+        // esi = IGameClient*, ecx = NetClient* (IGameClient == GameClient + 0x144)
+        mov eax, [ecx+0xD8] // eax = netClient->udpsocket
+        mov [esi+0x108], eax // gameClient.restartServerPinger.udpsocket = eax
+        mov dword ptr [ecx+0xDC], 0 // netClient->udpsocketOwnerPtr = 0 ; if this is null NetClient destructor won't delete the UDPSocket
+    MOVE_CODE_AND_ADD_CODE(a, 0x00490F4C, 5, HOOK_ADD_ORIGINAL_BEFORE);
 }
 
 void patch_master_address()
