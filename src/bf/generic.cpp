@@ -113,6 +113,44 @@ void Game::addPlayerInput_hook(int playerid, PlayerInput* input)
         }
     }
 
+    // This code can rescale the mouse inputs to match the Infantry sensitivity instead of
+    // LandSea when the player is in a PlayerControlObject with category Land and type
+    // StationaryMG (stationary machineguns). This feature was requested by Butcher.
+    if (g_settings.stationaryMGInfSensitivity) {
+        auto localPlayer = BFPlayer::getLocal();
+        if (localPlayer && localPlayer->getId() == playerid) {
+            auto vehicle = localPlayer->getVehicle();
+            // is player in PlayerControlObject?
+            if (vehicle) {
+                if (auto pcoTmpl = (IPlayerControlObjectTemplate*)vehicle->getTemplate()->queryInterface(IID_IPlayerControlObjectTemplate); pcoTmpl) {
+                    // Is it a Land vehicle and of type StationaryMG?
+                    if (pcoTmpl->getVehicleCategory() == VCLand && pcoTmpl->getVehicleType() == VTStationaryMG) {
+                        // The following hacks retrieve the land and infantry mouse sensitivity and invert setting
+                        typedef float (__fastcall* get_sens_t)(void*);
+                        typedef bool (__fastcall* get_inv_t)(void*);
+                        static get_sens_t getLandSeaSensitivity = (get_sens_t)0x006C5840;
+                        static get_sens_t getInfantrySensitivity = (get_sens_t)0x006C5800;
+                        static get_inv_t getLandSeaInvert = (get_inv_t)0x006C5820;
+                        static get_inv_t getInfantryInvert = (get_inv_t)0x006C57E0;
+                        void* controlSettings;
+                        if (auto mainUI = *(uintptr_t*)0x00A5C630; mainUI && (controlSettings = *(void**)(mainUI + 0x18))) {
+                            float landSens = getLandSeaSensitivity(controlSettings), infSens = getInfantrySensitivity(controlSettings);
+                            bool landInvert = getLandSeaInvert(controlSettings), infInvert = getInfantryInvert(controlSettings);
+                            // This is not totally accurate because 0.02 is added to the sensitivity elsewhere
+                            float multiplier = infSens / landSens;
+                            input->controls[4] *= multiplier; // left/right
+                            input->controls[5] *= multiplier; // up/down
+                            if (landInvert != infInvert) {
+                                input->controls[5] = -input->controls[5];
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
     addPlayerInput_orig(playerid, input);
 }
 

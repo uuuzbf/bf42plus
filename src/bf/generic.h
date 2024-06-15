@@ -6,6 +6,10 @@ enum ClassID {
     CID_BFSoldierTemplate = 0x9493
 };
 
+enum InterfaceID {
+    IID_IPlayerControlObjectTemplate = 0xc4c4,
+};
+
 class IBase {
 public:
     virtual void addRef() = 0;

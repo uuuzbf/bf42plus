@@ -1,7 +1,34 @@
 #pragma once
 #include <cstdint>
 
+enum VehicleCategory {
+    VCLand = 0,
+    VCSea = 1,
+    VCAir = 2,
+};
 
+enum VehicleType {
+    VTHeavyTank = 0,
+    VTLightTank = 1,
+    VTArtillery = 2,
+    VTApc = 3,
+    VTScoutCar = 4,
+    VTFighter = 5,
+    VTDiveBomber = 6,
+    VTBomber = 7,
+    VTAAGun = 8,
+    VTStationaryMG = 9,
+    VTDestroyer = 10,
+    VTBattleship = 11,
+    VTCarrier = 12,
+    VTSubmarine = 13,
+    VTLcvp = 14,
+    VTLevelBomber = 16,
+    VTArmoredCar = 17,
+    VTTankHunter = 18,
+    VTATGun = 19,
+    VTNone = 20,
+};
 
 class ObjectTemplate;
 class NetworkableBase;
@@ -72,7 +99,7 @@ public:
 
 static_assert(sizeof(IObject) == 0x6C);
 
-class ObjectTemplate : public IBase, IConsoleSaveable {
+class ObjectTemplate : public IBase, public IConsoleSaveable {
 protected:
     bfs::string name;
     bfs::string networkableInfo;
@@ -81,6 +108,9 @@ protected:
     bfs::map<unsigned int, void*> components; // map<unsigned int, SmartPtr<IBase>>
     float cullRadiusScale;
 public:
+    using IBase::addRef;
+    using IBase::release;
+    using IBase::queryInterface;
     virtual int getClassID() const = 0;
     virtual void setName(const bfs::string) = 0;
     virtual const bfs::string& getName() const = 0;
@@ -98,6 +128,75 @@ public:
     virtual ~ObjectTemplate() = 0;
     virtual void setNetworkableInfo(const bfs::string& networkableInfo) = 0;
     virtual const bfs::string& getNetworkableInfo() const = 0; 
+};
+
+class IPlayerControlObjectTemplate : public IBase {
+public:
+    virtual void setPcoId(int) = 0;
+    virtual int getPcoId(void) = 0;
+    virtual void setPcoFlags(int) = 0;
+    virtual int getPcoFlags(void) = 0;
+    virtual void setGuiIndex(int) = 0;
+    virtual int getGuiIndex(void) = 0;
+    virtual void setVehicleIcon(bfs::string) = 0;
+    virtual bfs::string getVehicleIcon(void) = 0;
+    virtual void setVehicleIconPos(Vec2 const&) = 0;
+    virtual Vec2 getVehicleIconPos(void) = 0;
+    virtual void setNumberOfWeaponIcons(int) = 0;
+    virtual int getNumberOfWeaponIcons(void) = 0;
+    virtual void setPrimaryAmmoIcon(bfs::string) = 0;
+    virtual bfs::string getPrimaryAmmoIcon(void) = 0;
+    virtual void setPrimaryAmmoBar(int) = 0;
+    virtual int getPrimaryAmmoBar(void) = 0;
+    virtual void setSecondaryAmmoIcon(bfs::string) = 0;
+    virtual bfs::string getSecondaryAmmoIcon(void) = 0;
+    virtual void setSecondaryAmmoBar(int) = 0;
+    virtual int getSecondaryAmmoBar(void) = 0;
+    virtual void setHasTurretIcon(bool) = 0;
+    virtual bool getHasTurretIcon(void) = 0;
+    virtual void setCrossHairType(int) = 0;
+    virtual int getCrossHairType(void) = 0;
+    virtual void setCrossHairIcon(bfs::string) = 0;
+    virtual bfs::string getCrossHairIcon(void) = 0;
+    virtual void setVehicleCategory(VehicleCategory) = 0;
+    virtual VehicleCategory getVehicleCategory(void) = 0;
+    virtual void setVehicleType(VehicleType) = 0;
+    virtual VehicleType getVehicleType(void) = 0;
+    virtual void setToolTipType(int) = 0;
+    virtual int getToolTipType(void) = 0;
+    virtual void setMinimapIcon(bfs::string) = 0;
+    virtual bfs::string getMinimapIcon(void) = 0;
+    virtual void setMinimapIconSize(int) = 0;
+    virtual int getMinimapIconSize(void) = 0;
+    virtual void unknown1(const Vec3&, const Vec3&) = 0;
+    virtual void setArtPos(bool) = 0;
+    virtual bool getArtPos(void) = 0;
+    virtual void setSubPos(bool) = 0;
+    virtual bool getSubPos(void) = 0;
+    virtual void setSonarPos(bool) = 0;
+    virtual bool getSonarPos(void) = 0;
+    virtual void setDirBarXScale(float) = 0;
+    virtual float getDirBarXScale(void) = 0;
+    virtual void setDirBarYScaleAbove(float) = 0;
+    virtual float getDirBarYScaleAbove(void) = 0;
+    virtual void setDirBarYScaleBelow(float) = 0;
+    virtual float getDirBarYScaleBelow(void) = 0;
+    virtual void setDirBarRotate(float) = 0;
+    virtual float getDirBarRotate(void) = 0;
+    virtual void setDirBarYScaleMin(float) = 0;
+    virtual float getDirBarYScaleMin(void) = 0;
+    virtual void setDirBarYScaleMax(float) = 0;
+    virtual float getDirBarYScaleMax(void) = 0;
+    virtual void setNameTagOffset(Vec3) = 0;
+    virtual Vec3 getNameTagOffset(void) = 0;
+    virtual void setRidingWithOffset(Vec3) = 0;
+    virtual Vec3 getRidingWithOffset(void) = 0;
+    virtual void setRidingWithDistMod(float) = 0;
+    virtual float getRidingWithDistMod(void) = 0;
+    virtual void setVehicleCameraShake(int) = 0;
+    virtual int getVehicleCameraShake(void) = 0;
+    virtual void setVehicleFov(float) = 0;
+    virtual float getVehicleFov(void) = 0;
 };
 
 static_assert(sizeof(ObjectTemplate) == 0x58);

@@ -142,6 +142,11 @@ public:
         L"; This option enables a workaround that makes the on-foot sensitivity to always be the same\n"
         L"; WARNING: Enabling this may feel unusual because of the decreased sensitivity!",
         0, false };
+    BoolSetting stationaryMGInfSensitivity = {
+        L"general", L"stationaryMGInfSensitivity",
+        L"; Enables scaling of the mouse sensitivity in stationary MG42/Browning to be the same\n"
+        L"; as the infantry sensitivity. Affects PCOs with category VCLand and type VTStationaryMG.",
+        0, false };
     BoolSetting enable3DMineMap = {
         L"general", L"enable3DMineMap",
         L"; Enable 3D map showing friendly mines. In multiplayer it is only enabled if the server allows it.",

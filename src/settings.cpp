@@ -118,6 +118,7 @@ Settings::Settings()
         &smootherGameplay,
         &presetBuddyColors,
         &correctedLookSensitivity,
+        &stationaryMGInfSensitivity,
         &enable3DMineMap,
         &enable3DSupplyMap,
         &enable3DControlPointMap,
