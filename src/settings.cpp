@@ -125,6 +125,7 @@ Settings::Settings()
         &crashCreateFullDump,
         &crashDumpsToKeep,
         &fasterMapchange,
+        &wrapChat,
     };
 }
 

@@ -165,6 +165,19 @@ void BfMenu::addChatMessageInternal_hook(bfs::wstring message, int team, int fir
             message.append(pidsuffix);
         }
     }
+
+    if (type == 0 && g_settings.wrapChat.value != 0) {
+        std::wstring msg(message.data(), message.size());
+        while (msg.size() > g_settings.wrapChat.value) {
+            // bfsmd uses \xFF, moongamers uses \x80 as spaces
+            auto spaceToWrapAt = msg.find_last_of(L" \x80\xff", g_settings.wrapChat.value, 3);
+            if (spaceToWrapAt == std::wstring::npos || spaceToWrapAt == 0) spaceToWrapAt = g_settings.wrapChat.value;
+            addChatMessageInternal(msg.substr(0, spaceToWrapAt).c_str(), team, firstLinePos, numMessages, maxLines, age, type, isBuddy);
+            msg.erase(0, spaceToWrapAt); // leave the space as first character
+        }
+        message = msg;
+    }
+
     addChatMessageInternal(message, team, firstLinePos, numMessages, maxLines, age, type, isBuddy);
 }
 

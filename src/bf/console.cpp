@@ -46,6 +46,37 @@ public:
     void needsRestart() { BfMenu::getSingleton()->outputConsole("This setting only takes effect after the next launch!"); };
 };
 
+class ConsoleObjectIntSetting : public ConsoleObject {
+protected:
+    int result;
+public:
+    ConsoleObjectIntSetting() {
+        isdynamic = true;
+        type = 1;
+        access = 1;
+        objectname = "plus";
+        minargcount = 0;
+        maxargcount = 1;
+        argdesc[0] = "int";
+        argtype[0] = -1;
+        retdesc = "int";
+        customCommands.push_back(this);
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            args[0] = atoi(value.c_str());
+        }
+    };
+    virtual bfs::string getReturnValueAsString() {
+        if (hasreturnvalue) {
+            char temp[32];
+            return _itoa(result, temp, 10);
+        }
+        return "";
+    };
+};
+
 class ConsoleObjectPlusShowConnectsInChat : public ConsoleObjectBoolSetting {
 public:
     ConsoleObjectPlusShowConnectsInChat() : ConsoleObjectBoolSetting() {
@@ -502,6 +533,28 @@ public:
     };
 };
 ConsoleObjectPlusFasterMapchange commandPlusFasterMapchange;
+
+class ConsoleObjectPlusWrapChat : public ConsoleObjectIntSetting {
+public:
+    ConsoleObjectPlusWrapChat() : ConsoleObjectIntSetting() {
+        functionname = "wrapChat";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.wrapChat.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.wrapChat.value = args[0];
+            g_settings.wrapChat.dirty = true;
+            g_settings.save(false);
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusWrapChat commandPlusWrapChat;
 
 #ifdef _DEBUG
 class ConsoleObjectPlusCrash : public ConsoleObject {

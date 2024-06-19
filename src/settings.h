@@ -171,6 +171,11 @@ public:
         L"general", L"fasterMapchange",
         L"; Restart the game faster when the map is changing.",
         0, true };
+    IntSetting wrapChat = {
+        L"general", L"wrapChat",
+        L"; Wrap chat messages if longer than this value. Set to 0 to disable. A good value is 42.\n"
+        L"; Also increasing chat lines from 4 to 6 by typing 'chattext 6' in console is recommended.",
+        0, 0 };
 };
 
 extern Settings g_settings;
