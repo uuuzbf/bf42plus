@@ -95,9 +95,18 @@ void patch_quicker_server_pinging_on_restart()
     // restart much faster than that.
 
     // make server pinging quicker when restarting on map change
-    static float delayBeforePingingStarts = 1.0f; // default 16 sec
+    BEGIN_ASM_CODE(b)
+        mov al, g_serverSettings.UI.allowFasterRestart
+        test al,al
+        jnz allow
+        mov eax, 0x41800000 // 16.0f
+        jmp j
+    allow:
+        mov eax, 0x3f800000 // 1.0f
+    j:
+        mov dword ptr[esi+0x0C], eax
+    MOVE_CODE_AND_ADD_CODE(b, 0x004B6FFD, 7, HOOK_DISCARD_ORIGINAL);
     static float pingInterval = 2.0f; // default 3 sec
-    patchBytes(0x004B7000, delayBeforePingingStarts);
     patchBytes(0x004B6F6C, pingInterval);
 
     // In GameClient::disconnect, when destroying NetClient, steal its UDPSocket and put it in

@@ -205,6 +205,7 @@ public:
     struct SUI {
         bool openSpawnScreenOnDeath = true;
         bool openSpawnScreenOnJoin = true;
+        bool allowFasterRestart = true;
     } UI;
 
     void parseFromText(const char* text);
