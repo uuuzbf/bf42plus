@@ -211,6 +211,7 @@ public:
         bool openSpawnScreenOnDeath = true;
         bool openSpawnScreenOnJoin = true;
         bool allowFasterRestart = true;
+        bool skipBriefingWindow = false;
     } UI;
 
     void parseFromText(const char* text);

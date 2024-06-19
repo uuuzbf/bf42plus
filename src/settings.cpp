@@ -303,6 +303,7 @@ void ServerSettings::parseFromText(const char* text)
                     if (key == "ssdeath") UI.openSpawnScreenOnDeath = value != "0";
                     else if (key == "ssjoin") UI.openSpawnScreenOnJoin = value != "0";
                     else if (key == "fr") UI.allowFasterRestart = value != "0";
+                    else if (key == "sbw") UI.skipBriefingWindow = true;
                     debuglog(" %i %i\n", UI.openSpawnScreenOnDeath ? 1 : 0, UI.openSpawnScreenOnJoin ? 1 : 0);
                 }
             }

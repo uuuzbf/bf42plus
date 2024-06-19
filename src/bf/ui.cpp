@@ -542,6 +542,17 @@ void patch_optionally_disable_ui_elements()
         retn 8
     cont3:
     MOVE_CODE_AND_ADD_CODE(c, 0x006CD610, 6, HOOK_ADD_ORIGINAL_AFTER);
+
+    // Skip briefing window
+    BEGIN_ASM_CODE(d)
+        mov al, g_serverSettings.UI.skipBriefingWindow
+        test al,al
+        jz do_not_skip
+        // Call cbDeActivateInfoMenu instead of transitioning to the briefing window
+        mov eax, 0x006D8420
+        jmp eax
+    do_not_skip:
+    MOVE_CODE_AND_ADD_CODE(d, 0x006D8740, 6, HOOK_ADD_ORIGINAL_AFTER);
 }
 
 void ui_hook_init()
