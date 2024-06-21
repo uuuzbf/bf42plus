@@ -483,6 +483,22 @@ void patch_add_debug_messages_to_restart_code()
     MOVE_CODE_AND_ADD_CODE(a, 0x0048FFB6, 7, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+void patch_fix_radio_playvoice_crash()
+{
+    // Fix a crash when a radio message is played for a player whose defaultVehicle is not a BFSoldier
+    BEGIN_ASM_CODE(a)
+        // ebx = defaultVehicle, ebp = vehicle
+        mov ecx, [ebx+0x4C] // get template ptr
+        mov eax, [ecx] // template vtbl
+        call [eax+0x0C] // template->getClassId()
+        cmp eax, CID_BFSoldierTemplate
+        jz cont
+        mov eax, 0x006D316D
+        jmp eax
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x006D310B, 8, HOOK_ADD_ORIGINAL_BEFORE);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -522,6 +538,8 @@ void bfhook_init()
     trace_function_fastcall(0x004B6FC0, 9, function_tracer_fastcall, "?S1f2:RestartServerPinger__init");
     patch_add_debug_messages_to_restart_code();
     trace_function_fastcall(0x006B42F0, 5, function_tracer_fastcall, "?i1S2:LoadingScreen__showDisconnectMessage");
+
+    patch_fix_radio_playvoice_crash();
 
     dynbuffer_make_nonwritable();
 }
