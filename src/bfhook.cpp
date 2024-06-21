@@ -499,6 +499,23 @@ void patch_fix_radio_playvoice_crash()
     MOVE_CODE_AND_ADD_CODE(a, 0x006D310B, 8, HOOK_ADD_ORIGINAL_BEFORE);
 }
 
+void patch_hide_broken_healthbar_if_no_kit()
+{
+    // Fix soldier healthbar showing as a white box if the player is spawned without a kit.
+    // If the texture name for the healthbar is empty, the soldier hud is hidden.
+    BEGIN_ASM_CODE(a)
+        mov edx, [ecx] // get vtbl
+        mov eax, [ecx+0x44+0x14] // get SoldierHealthBarIcon string length
+        test eax,eax
+        jz hidehud // if texture name is empty, jump
+        call [edx+0x10] // HUDSoldier::show()
+        jmp cont
+    hidehud:
+        call [edx+0x14] // HUDSoldier::hide()
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x006CDE8A, 5, HOOK_DISCARD_ORIGINAL);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -540,6 +557,7 @@ void bfhook_init()
     trace_function_fastcall(0x006B42F0, 5, function_tracer_fastcall, "?i1S2:LoadingScreen__showDisconnectMessage");
 
     patch_fix_radio_playvoice_crash();
+    patch_hide_broken_healthbar_if_no_kit();
 
     dynbuffer_make_nonwritable();
 }
