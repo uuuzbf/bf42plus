@@ -11,6 +11,10 @@ typedef BOOL __stdcall MiniDumpWriteDump_t(HANDLE, DWORD, HANDLE, DWORD, PMINIDU
 
 static MiniDumpWriteDump_t* pMiniDumpWriteDump = 0;
 
+static HANDLE unhandledExceptionEvent = 0;
+static LPEXCEPTION_POINTERS unhandledExceptionPointers = 0;
+static DWORD unhandledExceptionThreadID;
+
 static void writeCoredump(const char* timestamp, EXCEPTION_POINTERS* x, DWORD threadid) {
     if (pMiniDumpWriteDump) {
         char dumpfile[MAX_PATH];
@@ -59,23 +63,39 @@ static void logStack(uintptr_t start)
         debuglog("\n");
         stack += 4;
     }
+    debuglog("end of stack\n");
 
     // print numbers on stack that look like pointers to executable memory
     void** stackp = (void**)(start & ~3);
     MEMORY_BASIC_INFORMATION mbi;
     if (VirtualQuery((void*)start, &mbi, sizeof(mbi)) != 0) {
-        int n = ((uintptr_t)mbi.BaseAddress + mbi.RegionSize - start) / 4;
-        int cnt = 0;
+        uintptr_t stack_min = (uintptr_t)stackp;
+        uintptr_t stack_max = (uintptr_t)mbi.BaseAddress + mbi.RegionSize;
+        int n = (stack_max - stack_min) / 4;
+        //int cnt = 0;
         for (int i = 0; i < n; i++) {
-            //if (VirtualQuery(*stackp, &mbi, sizeof(mbi)) != 0 && mbi.AllocationProtect & 0xF0) { // 0x10 0x20 0x40 0x80 are constants with execute
-            // use a hardcoded range for BF1942 executable memory
-            if ((uintptr_t)*stackp > 0x00401000 && (uintptr_t)*stackp < 0x008C3000) {
-                debuglog("%p: %p\n", stackp, *stackp);
-                if (++cnt > 30) break;
+            if (VirtualQuery(*stackp, &mbi, sizeof(mbi)) != 0 && mbi.AllocationProtect & 0xF0) { // 0x10 0x20 0x40 0x80 are constants with execute
+                // Only print address if it points into BF1942 executable range or it looks like it has a valid frame pointer
+                if (((uintptr_t)*stackp > 0x00401000 && (uintptr_t)*stackp < 0x008C3000) || ((uintptr_t)stackp[-1] > (uintptr_t)stackp && (uintptr_t)stackp[-1] < stack_max)) {
+                    debuglog("%p: %p", stackp, *stackp);
+                    if (mbi.AllocationBase != 0) {
+                        HMODULE module = (HMODULE)mbi.AllocationBase;
+                        char modulepath[MAX_PATH];
+                        if (GetModuleFileNameA(module, modulepath, MAX_PATH)) {
+                            char* filename = strrchr(modulepath, '\\');
+                            if (filename) filename++;
+                            else filename = modulepath;
+                            debuglog(" (%s+0x%X)", filename, (uintptr_t)*stackp - (uintptr_t)mbi.AllocationBase);
+                        }
+                    }
+                    debuglog(" args: %p %p %p %p\n", stackp[1], stackp[2], stackp[3], stackp[4]);
+                    //if (++cnt > 50) break;
+                }
             }
             stackp++;
         }
     }
+    debuglog("end of return addresses\n");
 }
 
 static void logContextRecord(CONTEXT* ctx)
@@ -90,13 +110,19 @@ static void logContextRecord(CONTEXT* ctx)
 
     // print readable memory regions pointed to by registers
     uint32_t** ptr = (uint32_t**)&ctx->Edi;
-    static const char* regNames[] = { "edi", "esi", "ebx", "edx", "ecx", "eax" };
-    for (int i = 0; i <= 6; i++) {
+    static const char* regNames[] = { "edi", "esi", "ebx", "edx", "ecx", "eax", "ebp"};
+    for (int i = 0; i < 7; i++) {
         MEMORY_BASIC_INFORMATION mbi;
-        if (VirtualQuery((void*)ptr[i], &mbi, sizeof(mbi)) != 0 && mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS) {
-            debuglog("%s: %p -> type %X protect %X - %08X %08X %08X %08X\n", regNames[i], ptr[i], mbi.Type, mbi.Protect, ptr[i][0], ptr[i][1], ptr[i][2], ptr[i][3]);
+        if (VirtualQuery((void*)ptr[i], &mbi, sizeof(mbi)) != 0){
+            debuglog("%s: %p -> type %X protect %X", regNames[i], ptr[i], mbi.Type, mbi.Protect);
+            if (mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS && mbi.Protect != 0) {
+
+                debuglog(" - %08X %08X %08X %08X", ptr[i][0], ptr[i][1], ptr[i][2], ptr[i][3]);
+            }
+            debuglog("\n");
         }
     }
+    debuglog("end of extended register info\n");
 }
 
 static void logThreadContext(DWORD threadID)
@@ -121,8 +147,7 @@ static void logThreadContext(DWORD threadID)
     else debuglog("logThreadContext: %s %X", "open", GetLastError());
 }
 
-LONG __stdcall unhandledExceptionFilter(LPEXCEPTION_POINTERS x) {
-    DWORD threadID = GetCurrentThreadId();
+static void handleUnhandledException(LPEXCEPTION_POINTERS x) {
     EXCEPTION_RECORD* xr = x->ExceptionRecord;
 
     if (isDebuglogOpen()) {
@@ -140,8 +165,23 @@ LONG __stdcall unhandledExceptionFilter(LPEXCEPTION_POINTERS x) {
 
     const char* now = getFileTimestamp();
 
-    writeCoredump(now, x, threadID);
+    writeCoredump(now, x, unhandledExceptionThreadID);
     closeAndRenameDebuglog(now, "crash");
+}
+
+LONG __stdcall unhandledExceptionFilter(LPEXCEPTION_POINTERS x) {
+    if (!WaitForSingleObject(unhandledExceptionEvent, 0)) {
+        debuglog("exception during handling unhandled exception\n");
+        handleUnhandledException(x);
+    }
+    else {
+        unhandledExceptionPointers = x;
+        unhandledExceptionThreadID = GetCurrentThreadId();
+        SetEvent(unhandledExceptionEvent);
+        do {
+            Sleep(10);
+        } while (!WaitForSingleObject(unhandledExceptionEvent, 0));
+    }
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
@@ -161,12 +201,12 @@ static DWORD __stdcall watchdogThread(void*)
         // - detect hangs when GameClient is used (multiplayer client)
         // -  GameClient hangs the main loop while on loading screen!
 
-        Sleep(1000);
+        Sleep(250);
         if ((GetAsyncKeyState(VK_ESCAPE) >> 15)) ticksUntilKill++;
         else ticksUntilKill = 0;
 
         // is player holding Escape key to force an exit?
-        if (ticksUntilKill == 10) {
+        if (ticksUntilKill == 40) {
             debuglog("\n\n%s force kill key triggered, forcing exit..\n\n", getTimestamp());
 
             const char* now = getFileTimestamp();
@@ -182,6 +222,11 @@ static DWORD __stdcall watchdogThread(void*)
 
             //ExitProcess(48); // ExitProcess calls global destructors and may cause crash
             TerminateProcess(GetCurrentProcess(), 48);
+        }
+
+        if (!WaitForSingleObject(unhandledExceptionEvent, 0)) {
+            handleUnhandledException(unhandledExceptionPointers);
+            ResetEvent(unhandledExceptionEvent);
         }
 
     } while (!(*(bool**)0x00971EAC)[0x14d]); // while (!setup->got_quit_message)
@@ -206,6 +251,7 @@ void initCrashReporter(HMODULE module)
 {
     thisModule = module;
     mainThreadID = GetCurrentThreadId();
+    unhandledExceptionEvent = CreateEvent(0, true, false, 0);
     SetUnhandledExceptionFilter(unhandledExceptionFilter);
 
     CreateThread(0, 0, watchdogThread, 0, 0, 0);
