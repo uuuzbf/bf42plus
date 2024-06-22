@@ -125,6 +125,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
     switch (ul_reason_for_call)
     {
         case DLL_PROCESS_ATTACH:
+            // Check if we are running in the correct executable. This address has the call to main()
+            if (memcmp((void*)0x00804DA6, "\xE8\x95\x19\xC0\xFF", 5) != 0) break;
+
             g_this_module = hModule;
             WinMain_orig = (WinMain_t*)modify_call(0x00804DA6, (void*)WinMain_hook);
             break;
