@@ -33,6 +33,49 @@ enum VehicleType {
 class ObjectTemplate;
 class NetworkableBase;
 
+class IPlayerControlObject : public IBase {
+public:
+    virtual BFPlayer* getOccupingPlayer() const = 0;
+    virtual IObject* getOccupingObject() const = 0;
+    virtual bool isOccupied() const = 0;
+    virtual BFPlayer* getLastOccupidePlayer() = 0;
+    virtual int getLastOccupideTime() = 0;
+    virtual void enter(BFPlayer*, bool) = 0;
+    virtual void exit(bool) = 0;
+    virtual void exitPlayer() = 0;
+    virtual int getPcoId() const = 0;
+    virtual void setPcoId(int) = 0;
+    virtual void* getCameras(void) const = 0;
+    virtual void nextCamera(void) const = 0;
+    virtual void* getActiveCamera(void) const = 0;
+    virtual void* getPcos(void) const = 0;
+    virtual void getPcoPosId() const = 0;
+    virtual IPlayerControlObject* getPreferredPco() const = 0;
+    virtual void clearWeapons() = 0;
+    virtual void addWeapon(IObject*) = 0;
+    virtual int getNWeapons() const = 0;
+    virtual void* getWeapons() const = 0;
+    virtual IObject* getWeapon(int) const = 0;
+    virtual bool getSubPos(void) const = 0;
+    virtual bool getSonarPos(void) const = 0;
+    virtual bool getArtPos(void) const = 0;
+    virtual void setTeam(int) = 0;
+    virtual void clearTeam() = 0;
+    virtual int getTeam(void) const = 0;
+    virtual void addPlayerInputObject(void*) = 0;
+    virtual void removePlayerInputObject(void*) = 0;
+    virtual void setTimeToLiveUnused(float) = 0;
+    virtual void setObjectSpawnerId(int) = 0;
+    virtual int getObjectSpawnerId() const = 0;
+    virtual void setObjectSpawnerHolding(bool) = 0;
+    virtual bool getObjectSpawnerHolding() const = 0;
+    virtual const Vec3& getNameTagOffset() const = 0;
+    virtual const Vec3& getRidingWithOffset() const = 0;
+    virtual float getRidingWithDistMod() const = 0;
+    virtual int getVehicleCameraShake() const = 0;
+    virtual float getVehicleFov() const = 0;
+};
+
 class IObject : public IBase {
 protected:
     uint32_t flags;
@@ -95,6 +138,8 @@ public:
     NetworkableBase* getNetworkable() const { return networkable; };
     IObject* getParent() const { return parent; };
     bool hasMobilePhysics() const;
+    uint32_t getFlags() const { return flags; };
+    int getTeam() const;
 };
 
 static_assert(sizeof(IObject) == 0x6C);
@@ -127,7 +172,10 @@ public:
     virtual float getCullRadiusScale() const = 0;
     virtual ~ObjectTemplate() = 0;
     virtual void setNetworkableInfo(const bfs::string& networkableInfo) = 0;
-    virtual const bfs::string& getNetworkableInfo() const = 0; 
+    virtual const bfs::string& getNetworkableInfo() const = 0;
+
+    // Calls ObjectTemplateManager::getTemplate
+    static ObjectTemplate* __stdcall getTemplateByName(const bfs::string& name);
 };
 
 class IPlayerControlObjectTemplate : public IBase {
@@ -243,3 +291,7 @@ bfs::map<unsigned int, IObject*>& ObjectManager_getSupplyDepotMap();
 // This returns a vector containing all ControlPoints
 // Move this into ObjectManager when there will be one.
 bfs::vector<IObject*>& ObjectManager_getControlPointVector();
+
+// This returns a map containing all registered objects
+// Move this into ObjectManager when there will be one.
+bfs::map<unsigned int, IObject*>& ObjectManager_getAllRegisteredObjects();

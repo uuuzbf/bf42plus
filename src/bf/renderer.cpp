@@ -60,7 +60,7 @@ bool isPositionOnScreen(float x, float y) {
     return x >= 0 && y >= 0 && x <= vpSize[0] && y <= vpSize[1];
 }
 
-inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPosition, const bfs::string& text, int maxDistance, uint32_t color, NewRendFont* font)
+inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPosition, const bfs::string& text, int maxDistance, uint32_t color, NewRendFont* font, bool showDistance)
 {
     float distance = (position - playerPosition).lengthSquare();
     if (distance < maxDistance * maxDistance) {
@@ -73,8 +73,10 @@ inline static void draw3DMapItem(const Pos3& position, const Pos3& playerPositio
             font->setColor(color | (alpha << 24));
 
             font->drawText(screenPos.x - font->getStringWidth(text) / 2, screenPos.y, text);
-            bfs::string diststr = std::format("{}m", (int)distance);
-            font->drawText(screenPos.x - font->getStringWidth(diststr) / 2, screenPos.y - font->getHeight(), diststr);
+            if (showDistance) {
+                bfs::string diststr = std::format("{}m", (int)distance);
+                font->drawText(screenPos.x - font->getStringWidth(diststr) / 2, screenPos.y - font->getHeight(), diststr);
+            }
         }
     }
 }
@@ -130,7 +132,7 @@ void hook_Renderer_draw_1()
             // this compares teams... 
             if (*(int*)((intptr_t)proj + 0x144) == localPlayer->getTeam()) {
                 draw3DMapItem(proj->getAbsolutePosition(), playerPos, g_serverSettings.mine3DMap.text,
-                    g_serverSettings.mine3DMap.distance, g_serverSettings.mine3DMap.color, font);
+                    g_serverSettings.mine3DMap.distance, g_serverSettings.mine3DMap.color, font, true);
             }
         }
     }
@@ -214,7 +216,27 @@ void hook_Renderer_draw_1()
         }
         font->setScale(1.0, 1.0);
     }
+    
+    if (!g_serverSettings.custom3DMaps.empty()) {
+        auto& allObjs = ObjectManager_getAllRegisteredObjects();
+        for (auto node = allObjs.head->left; node != allObjs.head; node = node->next()) {
+            auto obj = node->pair.second;
+            // Is root object and not disabled?
+            if (obj->getFlags() & 0x02000000 && !(obj->getFlags() & 1)) {
+                auto tmpl = obj->getTemplate();
+                auto it = g_serverSettings.custom3DMaps.find(tmpl);
+                if (it != g_serverSettings.custom3DMaps.end()) {
+                    auto& map = it->second;
+                    if (!map.onlySameTeam || obj->getTeam() == -1 || obj->getTeam() == localPlayer->getTeam()) {
+                        draw3DMapItem(obj->getAbsolutePosition(), playerPos, map.text,
+                            map.distance, map.color, font, map.showDistance);
+                    }
+                }
+            }
+        }
 
+    }
+    
     font->setColor(oldcolor);
 }
 

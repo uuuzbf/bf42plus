@@ -201,11 +201,13 @@ public:
 
     struct Custom3DMap {
         bfs::string templateName;
-        bfs::string text;
-        int distance;
-        uint32_t color;
+        bfs::string text = "";
+        int distance = 30;
+        uint32_t color = 0xFFFF00;
+        bool onlySameTeam = true;
+        bool showDistance = false;
     };
-    std::list<Custom3DMap> custom3DMaps;
+    std::map<ObjectTemplate*, Custom3DMap> custom3DMaps;
 
     struct SUI {
         bool openSpawnScreenOnDeath = true;

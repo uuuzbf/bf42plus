@@ -30,6 +30,16 @@ __declspec(naked) bfs::vector<IObject*>& ObjectManager_getControlPointVector()
     }
 }
 
+__declspec(naked) bfs::map<unsigned int, IObject*>& ObjectManager_getAllRegisteredObjects()
+{
+    _asm {
+        mov ecx, 0x0097D764
+        mov ecx, [ecx] // pObjectManager
+        mov eax, [ecx]
+        jmp [eax+0xC4] // ->getAllRegisteredObjects()
+    }
+}
+
 __declspec(naked) bool IObject::hasMobilePhysics() const
 {
     _asm {
@@ -41,5 +51,27 @@ __declspec(naked) bool IObject::hasMobilePhysics() const
     no_physics:
         xor eax, eax
         ret
+    }
+}
+
+int IObject::getTeam() const
+{
+    auto IPCO = (IPlayerControlObject*)queryInterface(IID_IPlayerControlObject);
+    if (IPCO) {
+        return IPCO->getTeam();
+    }
+    if (tmpl->getClassID() == CID_ProjectileTemplate) {
+        return *(int*)((uintptr_t)this + 0x144);
+    }
+    return -1;
+};
+
+__declspec(naked) ObjectTemplate* __stdcall ObjectTemplate::getTemplateByName(const bfs::string& name)
+{
+    _asm {
+        mov ecx, 0x0097D768
+        mov ecx, [ecx] // pObjectTemplateManager
+        mov eax, [ecx]
+        jmp [eax+0x2C] // ->getTemplate(const bfs::string& name)
     }
 }

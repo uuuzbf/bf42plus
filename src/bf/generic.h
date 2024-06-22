@@ -3,18 +3,20 @@
 #include <string>
 
 enum ClassID {
-    CID_BFSoldierTemplate = 0x9493
+    CID_BFSoldierTemplate = 0x9493,
+    CID_ProjectileTemplate = 0x9495,
 };
 
 enum InterfaceID {
     IID_IPlayerControlObjectTemplate = 0xc4c4,
+    IID_IPlayerControlObject = 0xc4c5,
 };
 
 class IBase {
 public:
     virtual void addRef() = 0;
     virtual void release() = 0;
-    virtual IBase* queryInterface(uint32_t) = 0;
+    virtual IBase* queryInterface(uint32_t) const = 0;
 };
 
 class IConsoleSaveable : public IBase {

@@ -265,7 +265,7 @@ void ServerSettings::parseFromText(const char* text)
         auto settingEnd = settingStart;
         for (; (*settingEnd >= 'A' && *settingEnd <= 'Z') || (*settingEnd >= '0' && *settingEnd <= '9'); settingEnd++);
 
-        // settingEnd should point to the first parameter separato or the setting closing character
+        // settingEnd should point to the first parameter separator or the setting closing character
         if (*settingEnd != '&' && *settingEnd != '~') break;
 
         std::string_view setting(settingStart, settingEnd);
@@ -292,14 +292,39 @@ void ServerSettings::parseFromText(const char* text)
                 }
             }
             else if (setting == "3DCP") {
-
+                controlPoint3DMap.allow = true;
+                while (parseNextParameter(params, key, value)) {
+                    if (key == "D") mine3DMap.distance = strtol(value.data(), 0, 10);
+                }
             }
             else if (setting == "3DO") {
-
+                Custom3DMap c;
+                ObjectTemplate* tmpl{};
+                while (parseNextParameter(params, key, value)) {
+                    if (key == "t") {
+                        c.templateName = value;
+                        tmpl = ObjectTemplate::getTemplateByName(bfs::string(value.data(), value.size()));
+                        if (!tmpl) {
+                            debuglogt("server settings 3DO - invalid template specified: %.*s\n", value.size(), value.data());
+                            break;
+                        }
+                    }
+                    else if (key == "T") c.text = value;
+                    else if (key == "D") c.distance = strtol(value.data(), 0, 10);
+                    else if (key == "C") c.color = GetColorFromString(std::string(value.begin(), value.end()));
+                    else if (key == "A") c.onlySameTeam = false;
+                    else if (key == "sD") c.showDistance = true;
+                }
+                if (tmpl) {
+                    if (c.text.empty()) c.text = c.templateName;
+                    custom3DMaps.emplace(std::make_pair(tmpl, c));
+                }
+                else {
+                    debuglogt("ignoring 3DO server setting because no valid template\n");
+                }
             }
             else if (setting == "UI") {
                 while (parseNextParameter(params, key, value)) {
-                    debuglog(" %.*s -> %.*s\n", key.size(), key.data(), value.size(), value.data());
                     if (key == "hssdeath") UI.openSpawnScreenOnDeath = false;
                     else if (key == "hssjoin") UI.openSpawnScreenOnJoin = false;
                     else if (key == "nfr") UI.allowFasterRestart = false;
