@@ -488,9 +488,11 @@ void patch_fix_radio_playvoice_crash()
     // Fix a crash when a radio message is played for a player whose defaultVehicle is not a BFSoldier
     BEGIN_ASM_CODE(a)
         // ebx = defaultVehicle, ebp = vehicle
+        push ecx // save ecx
         mov ecx, [ebx+0x4C] // get template ptr
         mov eax, [ecx] // template vtbl
         call [eax+0x0C] // template->getClassId()
+        pop ecx // restore ecx
         cmp eax, CID_BFSoldierTemplate
         jz cont
         mov eax, 0x006D316D
