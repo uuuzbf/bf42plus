@@ -516,6 +516,62 @@ void patch_hide_broken_healthbar_if_no_kit()
     MOVE_CODE_AND_ADD_CODE(a, 0x006CDE8A, 5, HOOK_DISCARD_ORIGINAL);
 }
 
+void patch_CreateObjectEvent_crashes()
+{
+    // If the server has different version of map/mod, there is a high chance it tries to create a
+    // non-networked object clientside, causing a crash. This is caused by mismatching template IDs
+    // between client and server. Fail gracefully (with an error message) if this happens.
+    static const char* logmsg = "server tried to create non-network template %d\n";
+    BEGIN_ASM_CODE(a)
+        // ecx is pNetworkable eax, edx is free
+        test ecx,ecx
+        jnz cont // pNetworkable not null, continue
+
+        // add a log message
+        push [esp+0x158] // get templateid from function argument list
+        push logmsg
+        mov eax, debuglogt
+        call eax
+        add esp,8
+
+        // disconnect with DATA CORRUPT error message
+        mov ecx, 0x0095F8D4
+        mov ecx, [ecx]
+        add ecx,0x144 // Game -> IGameClient
+        push 7 // ERROR_MESSAGE_CORRUPT_DATA
+        mov eax, 0x00490F00
+        call eax // GameClient::disconnect
+
+        // return success from createNetworkObject so a fatal error isn't generated
+        pop edi
+        pop esi
+        pop ebp
+        mov al, 1
+        pop ebx
+        add esp, 0x144
+        ret 0x10
+
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x004931C5, 7, HOOK_ADD_ORIGINAL_AFTER);
+
+    // A fatal error can also happen if the server tries to create an object with unknown template ID.
+    // Replace push <ERROR> with push <LOG> so the game won't exit
+    patchBytes(0x00493271, { 0x6A, 0x05 });
+    // Add a call to disconnect
+    BEGIN_ASM_CODE(b)
+        // disconnect with DATA CORRUPT error message
+        mov ecx,0x0095F8D4
+        mov ecx, [ecx]
+        add ecx, 0x144 // Game -> IGameClient
+        push 7 // ERROR_MESSAGE_CORRUPT_DATA
+        mov eax, 0x00490F00
+        call eax // GameClient::disconnect
+
+        // make createNetworkObject return true, so it won't throw a fatal error
+        mov al,1
+    MOVE_CODE_AND_ADD_CODE(b, 0x004932D2, 5, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -558,6 +614,7 @@ void bfhook_init()
 
     patch_fix_radio_playvoice_crash();
     patch_hide_broken_healthbar_if_no_kit();
+    patch_CreateObjectEvent_crashes();
 
     dynbuffer_make_nonwritable();
 }
