@@ -300,11 +300,11 @@ void ServerSettings::parseFromText(const char* text)
             else if (setting == "UI") {
                 while (parseNextParameter(params, key, value)) {
                     debuglog(" %.*s -> %.*s\n", key.size(), key.data(), value.size(), value.data());
-                    if (key == "ssdeath") UI.openSpawnScreenOnDeath = value != "0";
-                    else if (key == "ssjoin") UI.openSpawnScreenOnJoin = value != "0";
-                    else if (key == "fr") UI.allowFasterRestart = value != "0";
+                    if (key == "hssdeath") UI.openSpawnScreenOnDeath = false;
+                    else if (key == "hssjoin") UI.openSpawnScreenOnJoin = false;
+                    else if (key == "nfr") UI.allowFasterRestart = false;
                     else if (key == "sbw") UI.skipBriefingWindow = true;
-                    debuglog(" %i %i\n", UI.openSpawnScreenOnDeath ? 1 : 0, UI.openSpawnScreenOnJoin ? 1 : 0);
+                    else if (key == "hen") UI.showEnemyNametags = false;
                 }
             }
             

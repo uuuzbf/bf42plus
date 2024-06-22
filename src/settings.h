@@ -212,6 +212,7 @@ public:
         bool openSpawnScreenOnJoin = true;
         bool allowFasterRestart = true;
         bool skipBriefingWindow = false;
+        bool showEnemyNametags = true;
     } UI;
 
     void parseFromText(const char* text);

@@ -555,6 +555,49 @@ void patch_optionally_disable_ui_elements()
     MOVE_CODE_AND_ADD_CODE(d, 0x006D8740, 6, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+void patch_optionally_disable_enemy_nametags()
+{
+    // Check for BFSoldiers
+    BEGIN_ASM_CODE(a)
+        // ecx is BFPlayer* (preserve), eax, edx is free
+        mov al, g_serverSettings.UI.showEnemyNametags
+        test al,al
+        jnz cont
+
+        mov eax, 0x0097D76C
+        mov eax, [eax] // PlayerManager*
+        mov eax, [eax+0x54] // BFPlayer* localHumanPlayer
+        mov eax, [eax+0xAC] // BFPlayer->team
+        cmp [ecx+0xAC], eax // compare found player's team to local player's team
+        jz cont
+        // different team, skip player
+        mov eax, 0x00441B57
+        jmp eax
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x00441AA7, 9, HOOK_ADD_ORIGINAL_AFTER);
+    
+    // Check for PlayerControlObjects
+    BEGIN_ASM_CODE(b)
+        // eax is IPlayerControlObject* (+11C, preserve), ecx, edx is free
+        mov cl, g_serverSettings.UI.showEnemyNametags
+        test cl, cl
+        jnz cont2
+
+        mov ecx, 0x0097D76C
+        mov ecx, [ecx] // PlayerManager*
+        mov ecx, [ecx+0x54] // BFPlayer* localHumanPlayer
+        mov ecx, [ecx+0xAC] // BFPlayer->team
+        cmp [eax+0x80], ecx // compare PlayerControlObject and local player team
+        jz cont2
+
+        // different team, skip PCO
+        mov ecx, 0x00441B57
+        jmp ecx
+
+    cont2:
+    MOVE_CODE_AND_ADD_CODE(b, 0x00441AF0, 7, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void ui_hook_init()
 {
     addChatMessageInternal_orig = (uintptr_t)hook_function(addChatMessageInternal_orig, 5, method_to_voidptr(&BfMenu::addChatMessageInternal_hook));
@@ -574,6 +617,7 @@ void ui_hook_init()
     patch_change_chat_buddy_color();
     patch_hook_scoreboard_add_buddy_button();
     patch_optionally_disable_ui_elements();
+    patch_optionally_disable_enemy_nametags();
 
     //trace_function_fastcall(0x006CCE20, 5, function_tracer_fastcall, "SpawnScreenStuff__setVisible");
 
