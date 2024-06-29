@@ -3,9 +3,49 @@
 #include "stl.h"
 #include "generic.h"
 
+enum PixelFormat {
+    PF_RGB_888 = 0x1,
+    PF_ARGB_8888 = 0x2,
+    PF_XRGB_8888 = 0x3,
+    PF_ARGB_4444 = 0x4,
+    PF_ARGB_1555 = 0x5,
+    PF_RGB_565 = 0x6,
+    PF_RGB_555 = 0x7,
+    PF_Alpha_8 = 0x8,
+    PF_Lum_8 = 0x9,
+    PF_Pal_8 = 0xA,
+    PF_DXT1 = 0xC,
+    PF_DXT2 = 0xD,
+    PF_DXT3 = 0xE,
+    PF_DXT4 = 0xF,
+    PF_DXT5 = 0x10,
+    PF_DEPTHBUFFER_D24S8 = 0x11,
+    PF_DEPTHBUFFER_D16 = 0x12,
+    PF_DEPTHBUFFER_D32 = 0x13,
+};
+
 struct D3DCOLOR;
 struct DisplaySettings;
 class WindowWin32;
+
+// not sure yet where ITexture stops and ITexture2D starts
+class ITexture : public IBase {
+public:
+    virtual int getInterfaceID() = 0;
+    virtual PixelFormat getPixelFormat() = 0;
+    virtual int getField40h() = 0;
+    virtual int getField44h() = 0;
+    virtual void setField44h(int) = 0;
+    virtual int getMipmaps() = 0;
+    virtual int DXTexBuf1__678300() = 0;
+    virtual bool getFrameBuffer(void*, PixelFormat pixelFormat, int mipmapLevel, void** out, int) = 0;
+    virtual bool DXTexBuf1__6791E0(int mipmapLevel) = 0;
+    virtual int getWidth() = 0;
+    virtual int getHeight() = 0;
+    virtual int getBitdepth() = 0;
+    virtual bool DXTexBuf1__6790C0(int, int, void*, int) = 0; // parameters unknown
+    virtual bool DXTexBuf1__6783E0(int mipmapLevel) = 0;
+};
 
 class RendPCDX8 : public IBase {
 public:
@@ -165,6 +205,41 @@ public:
     void drawDebugText(int x, int y, const bfs::string& str);
 
     NewRendFont* getFont() const { return font; };
+};
+
+class ITextureHandler : public IBase {
+public:
+    virtual const bfs::string& getFileExtension() = 0;
+    virtual bool canLoad() = 0;
+    virtual bool canSave() = 0;
+    virtual bool loadTexture(IBFStream*, ITexture*) = 0;
+    virtual bool saveTexture(IBFStream*, ITexture*) = 0;
+};
+
+class PNGTextureHandler : public ITextureHandler {
+    int refcount = 1;
+public:
+    void addRef() override;
+    void release() override;
+    IBase* queryInterface(uint32_t) const override;
+    const bfs::string& getFileExtension() override;
+    bool canLoad() override;
+    bool canSave() override;
+    bool loadTexture(IBFStream*, ITexture*) override;
+    bool saveTexture(IBFStream*, ITexture*) override;
+};
+
+class JPEGTextureHandler : public ITextureHandler {
+    int refcount = 1;
+public:
+    void addRef() override;
+    void release() override;
+    IBase* queryInterface(uint32_t) const override;
+    const bfs::string& getFileExtension() override;
+    bool canLoad() override;
+    bool canSave() override;
+    bool loadTexture(IBFStream*, ITexture*) override;
+    bool saveTexture(IBFStream*, ITexture*) override;
 };
 
 // This function is called repeatedly by a hook at CreateDevice if the resolution in

@@ -59,6 +59,17 @@ struct ColorListSetting : public Setting {
     virtual void save(CSimpleIni& ini);
 };
 
+struct EnumSetting : public Setting {
+    std::vector<std::string> possibleValues;
+    std::string value;
+    EnumSetting(const wchar_t* section, const wchar_t* name, const wchar_t* comment, int resourceid, const std::string& value, std::initializer_list<std::string> possibleValues) :
+        Setting(section, name, comment, resourceid), value(value), possibleValues(possibleValues) {};
+    virtual void load(const CSimpleIni& ini);
+    virtual void save(CSimpleIni& ini);
+    bool isValidValue(std::string value) const { return std::ranges::find(possibleValues.begin(), possibleValues.end(), value) != possibleValues.end(); };
+    const std::vector<std::string>& getPossibleValues() const { return possibleValues; };
+};
+
 class Settings {
     CSimpleIni ini;
     std::vector<Setting*> settings;
@@ -176,6 +187,10 @@ public:
         L"; Wrap chat messages if longer than this value. Set to 0 to disable. A good value is 42.\n"
         L"; Also increasing chat lines from 4 to 6 by typing 'chattext 6' in console is recommended.",
         0, 0 };
+    EnumSetting screenshotFormat = {
+        L"general", L"screenshotFormat",
+        L"; File format for screenshots. Possible values: png jpg",
+        0, "png", {"png", "jpg"} };
 };
 
 extern Settings g_settings;

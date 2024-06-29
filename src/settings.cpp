@@ -102,6 +102,25 @@ void ColorListSetting::save(CSimpleIni& ini)
     }
 }
 
+void EnumSetting::load(const CSimpleIni& ini)
+{
+    std::string value = WideStringToISO88591(ini.GetValue(section, name));
+    if (isValidValue(value)) {
+        this->value = value;
+    }
+    else {
+        // invalid enum value, overwrite with default value
+        dirty = true;
+    }
+}
+
+void EnumSetting::save(CSimpleIni& ini)
+{
+    if (dirty) {
+        ini.SetValue(section, name, ISO88591ToWideString(value).c_str(), comment, true);
+    }
+}
+
 Settings::Settings()
 {
     ini.SetQuotes(true);
@@ -126,6 +145,7 @@ Settings::Settings()
         &crashDumpsToKeep,
         &fasterMapchange,
         &wrapChat,
+        &screenshotFormat,
     };
 }
 

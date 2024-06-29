@@ -77,6 +77,48 @@ public:
     };
 };
 
+class ConsoleObjectEnumSetting : public ConsoleObject {
+protected:
+    bfs::string param;
+    bfs::string result;
+    std::string enumList;
+public:
+    ConsoleObjectEnumSetting() {
+        isdynamic = true;
+        type = 1;
+        access = 1;
+        objectname = "plus";
+        minargcount = 0;
+        maxargcount = 1;
+        argdesc[0] = enumList.c_str();
+        argtype[0] = -1;
+        retdesc = "string";
+        customCommands.push_back(this);
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            param = value;
+        }
+    };
+    virtual bfs::string getReturnValueAsString() {
+        if (hasreturnvalue) {
+            return result;
+        }
+        return "";
+    };
+    void updatePossibleValues(const std::vector<std::string>& possibleValues) {
+        std::stringstream ss;
+        for (auto it = possibleValues.begin();;) {
+            ss << *it;
+            if (++it == possibleValues.end()) break;
+            else ss << '|';
+        }
+        enumList = ss.str();
+        argdesc[0] = enumList.c_str();
+    }
+};
+
 class ConsoleObjectPlusShowConnectsInChat : public ConsoleObjectBoolSetting {
 public:
     ConsoleObjectPlusShowConnectsInChat() : ConsoleObjectBoolSetting() {
@@ -556,6 +598,33 @@ public:
 };
 ConsoleObjectPlusWrapChat commandPlusWrapChat;
 
+class ConsoleObjectPlusScreenshotFormat : public ConsoleObjectEnumSetting {
+public:
+    ConsoleObjectPlusScreenshotFormat() : ConsoleObjectEnumSetting() {
+        functionname = "screenshotFormat";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.screenshotFormat.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            if (g_settings.screenshotFormat.isValidValue(param)) {
+                g_settings.screenshotFormat.value = param;
+                g_settings.screenshotFormat.dirty = true;
+                g_settings.save(false);
+            }
+            else {
+                BfMenu::getSingleton()->outputConsole("Invalid value!");
+            }
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusScreenshotFormat commandPlusScreenshotFormat;
+
 #ifdef _DEBUG
 class ConsoleObjectPlusCrash : public ConsoleObject {
     bfs::string param;
@@ -599,6 +668,8 @@ ConsoleObjectPlusCrash commandPlusCrash;
 
 void register_custom_console_commands()
 {
+    commandPlusScreenshotFormat.updatePossibleValues(g_settings.screenshotFormat.getPossibleValues());
+
     ConsoleObjects::getSingleton()->registerConsoleObjects(customCommands);
     customCommands.clear();
 }

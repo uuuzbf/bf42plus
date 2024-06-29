@@ -1,5 +1,8 @@
 #include "../pch.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 uintptr_t drawDebugText_addr = 0x004611D0;
 void Renderer::drawDebugText_orig(int x, int y, const bfs::string& str) noexcept
 {
@@ -50,6 +53,167 @@ __declspec(naked) bool convertWorldPosToScreenPos(Vec3& output, const Vec3& inpu
         pop ebp
         ret
     }
+}
+
+static bool writeTextureToFile(IBFStream* output, ITexture* texture, const std::string& format)
+{
+    const auto pixelFormat = texture->getPixelFormat();
+    const auto width = texture->getWidth(), height = texture->getHeight();
+
+    void* out[2];
+    // Get the pixel data from the texture, out[0] will point
+    // to the pixel data, in the format specified by pixelFormat.
+    if (!texture->getFrameBuffer(0, pixelFormat, 0, out, 1)) {
+        debuglogt("PNGTextureHandler::saveTexture: texture->getFrameBuffer failed (pf: %d)\n", texture->getPixelFormat());
+        return false;
+    }
+
+    // The resulting pixel data most likely needs conversion for the
+    // stbi_write_* functions. Those accept pixels in either Y, RGB or RGBA
+    // format.
+    int stride;
+    uint8_t* data;
+    int channels;
+    bool freeData = false;
+    if (pixelFormat == PF_Pal_8 || pixelFormat == PF_Lum_8) {
+        // Untested!
+        stride = width;
+        data = (uint8_t*)out[0];
+        channels = 1;
+    }
+    else if (pixelFormat == PF_RGB_565 || pixelFormat == PF_XRGB_8888) {
+        stride = width * 3;
+        data = new uint8_t[stride * height];
+        freeData = true;
+        channels = 3;
+        auto q = data;
+        if (pixelFormat == PF_RGB_565) {
+            // Untested!
+            auto p = (uint16_t*)out[0];
+            for (int i = 0; i < (width * height); i++) {
+                q[0] = (*p >> 8) & 0b11111000; // red
+                q[1] = (*p >> 5) & 0b11111100; // green
+                q[2] = (*p << 3); // blue
+                p++;
+                q += 3;
+            }
+        }
+        else if (pixelFormat == PF_XRGB_8888) {
+            // Alpha channel is undefined, ignore it
+            auto p = (uint8_t*)out[0];
+            for (int i = 0; i < (width * height); i++) {
+                q[0] = p[2]; // red
+                q[1] = p[1]; // green
+                q[2] = p[0]; // blue
+                p += 4;
+                q += 3;
+            }
+        }
+    }
+    else if (pixelFormat == PF_ARGB_8888) {
+        // Untested!
+        stride = width * 4;
+        data = new uint8_t[stride * height];
+        freeData = true;
+        channels = 4;
+        auto q = data;
+        auto p = (uint8_t*)out[0];
+        for (int i = 0; i < (width * height); i++) {
+            q[0] = p[2]; // red
+            q[1] = p[1]; // green
+            q[2] = p[0]; // blue
+            q[3] = p[3]; // alpha
+            p += 4;
+            q += 4;
+        }
+    }
+    else {
+        debuglogt("PNGTextureHandler::saveTexture: invalid pixel format %d\n", pixelFormat);
+        return false;
+    }
+
+    stbi_write_func* writefunc = [](void* context, void* data, int size) {
+        reinterpret_cast<IBFStream*>(context)->write(data, size);
+        };
+
+    bool result = false;
+    if (format == "png") result = stbi_write_png_to_func(writefunc, output, width, height, channels, data, stride) > 0;
+    else if (format == "jpg") result = stbi_write_jpg_to_func(writefunc, output, width, height, channels, data, 90) > 0;
+
+    if (!result) {
+        debuglogt("PNGTextureHandler::saveTexture: stbi_write_%s_to_func failed (w:%d, h:%d, ch:%d, stride:%d)\n", format.c_str(), width, height, channels, stride);
+    }
+
+    if (freeData) delete[] data;
+
+    return result;
+}
+
+void PNGTextureHandler::addRef()
+{
+    refcount++;
+}
+
+void PNGTextureHandler::release()
+{
+    refcount--;
+    if (refcount == 0) delete this;
+}
+
+IBase* PNGTextureHandler::queryInterface(uint32_t iid) const
+{
+    if (iid == IID_IBase || iid == IID_ITextureHandler || iid == 500012)
+        return (IBase*)this;
+    return 0;
+}
+
+const bfs::string& PNGTextureHandler::getFileExtension()
+{
+    static bfs::string extension("PNG");
+    return extension;
+}
+
+bool PNGTextureHandler::canLoad() { return false; }
+bool PNGTextureHandler::canSave() { return true; }
+bool PNGTextureHandler::loadTexture(IBFStream*, ITexture*) { return false; }
+
+bool PNGTextureHandler::saveTexture(IBFStream* output, ITexture* texture)
+{
+    return writeTextureToFile(output, texture, "png");
+}
+
+
+void JPEGTextureHandler::addRef()
+{
+    refcount++;
+}
+
+void JPEGTextureHandler::release()
+{
+    refcount--;
+    if (refcount == 0) delete this;
+}
+
+IBase* JPEGTextureHandler::queryInterface(uint32_t iid) const
+{
+    if (iid == IID_IBase || iid == IID_ITextureHandler || iid == 500012)
+        return (IBase*)this;
+    return 0;
+}
+
+const bfs::string& JPEGTextureHandler::getFileExtension()
+{
+    static bfs::string extension("JPG");
+    return extension;
+}
+
+bool JPEGTextureHandler::canLoad() { return false; }
+bool JPEGTextureHandler::canSave() { return true; }
+bool JPEGTextureHandler::loadTexture(IBFStream*, ITexture*) { return false; }
+
+bool JPEGTextureHandler::saveTexture(IBFStream* output, ITexture* texture)
+{
+    return writeTextureToFile(output, texture, "jpg");
 }
 
 bool isPositionOnScreen(float x, float y) {
@@ -364,9 +528,95 @@ bool __stdcall tryRecoverFromInvalidScreenResolution(void* RendPCDX8, void* vide
     // unreachable
 }
 
+static __declspec(naked) bool TextureManager_registerTextureHandler(ITextureHandler* handler)
+{
+    _asm {
+        push ebp
+        mov ebp,esp
+
+        // Get g_TextureManager into ecx
+        mov ecx, 0x009A99D8
+        mov ecx, [ecx]
+        test ecx,ecx
+        jz fail
+
+        // Call g_TextureManager->registerTextureHandler(handler)
+        mov eax, [ecx]
+        push handler
+        call [eax+0x38]
+
+        mov al,1
+        jmp done
+    fail:
+        xor eax,eax
+    done:
+        pop ebp
+        ret
+    }
+}
+
+static bool registerExtraTextureHandlers()
+{
+    ITextureHandler* handler = new PNGTextureHandler();
+    if (!TextureManager_registerTextureHandler(handler)) {
+        debuglogt("failed to register PNG handler\n");
+        return false;
+    }
+    handler->release();
+
+    handler = new JPEGTextureHandler();
+    if (!TextureManager_registerTextureHandler(handler)) {
+        debuglogt("failed to register JPEG handler\n");
+        return false;
+    }
+    handler->release();
+
+    return true;
+}
+
+static void patch_hook_registerTextureHandlers()
+{
+    // Add a tail call from the end of registerTextureHandlers
+    // to our function
+    BEGIN_ASM_CODE(a)
+        mov ecx, registerExtraTextureHandlers
+        jmp ecx
+    MOVE_CODE_AND_ADD_CODE(a, 0x00460A92, 5, HOOK_DISCARD_ORIGINAL);
+}
+
+static const char* getScreenshotPath()
+{
+    static char path[MAX_PATH];
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    snprintf(path, MAX_PATH, "ScreenShots/%04d-%02d-%02d_%02d-%02d-%02d-%03d.%s",
+        now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute, now.wSecond, now.wMilliseconds, g_settings.screenshotFormat.value.c_str());
+    return path;
+}
+
+static void patch_screenshot_name()
+{
+    // static const char* newFormat = "ScreenShots/ScreenShot%d.png";
+    // patchBytes<const char*>(0x004676C0, newFormat);
+
+    // Replace the code that generates the screenshot name with a custom function
+    BEGIN_ASM_CODE(a)
+        // eax must contain a const char* with the screenshot path
+        mov eax, getScreenshotPath
+        call eax
+    MOVE_CODE_AND_ADD_CODE(a, 0x004676B4, 30, HOOK_DISCARD_ORIGINAL);
+
+    // Disable code that initializes g_screenshot_counter when the main window is
+    // created. This may save some time because the game tries to open each
+    // screenshot file until it fails.
+    inject_jmp(0x004634B2, 5, (void*)0x463552, 1);
+}
+
 void renderer_hook_init()
 {
     drawDebugText_addr = (uintptr_t)hook_function(drawDebugText_addr, 5, method_to_voidptr(&Renderer::drawDebugText));
 
     install_hook_Renderer_draw_1();
+    patch_hook_registerTextureHandlers();
+    patch_screenshot_name();
 }

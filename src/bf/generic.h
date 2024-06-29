@@ -8,8 +8,10 @@ enum ClassID {
 };
 
 enum InterfaceID {
+    IID_IBase = 1,
     IID_IPlayerControlObjectTemplate = 0xc4c4,
     IID_IPlayerControlObject = 0xc4c5,
+    IID_ITextureHandler = 500009,
 };
 
 class IBase {
@@ -128,6 +130,22 @@ public:
     Node* buckets;
     size_t numBuckets;
     uint32_t unknown;
+};
+
+// This is IStream in the game, but there are no namespaces here and it
+// colldides some windows stuff.
+class IBFStream : public IBase {
+public:
+    virtual size_t read(void* data, size_t bytes) = 0;
+    virtual size_t write(const void* data, size_t bytes) = 0;
+    virtual bool skip(size_t bytes) = 0;
+    virtual size_t getAvailableBytes() = 0;
+    virtual IBFStream* clone() = 0;
+    virtual bool canRead() = 0;
+    virtual bool canWrite() = 0;
+    virtual bool seek(int origin, int) = 0;
+    virtual size_t getPosition() = 0;
+    virtual size_t getSize() = 0;
 };
 
 uint32_t __fastcall calcStringHashValueNoCase(const bfs::string& str);

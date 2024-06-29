@@ -17,6 +17,7 @@
 #include <CommCtrl.h>
 #include <commdlg.h>
 #include <float.h>
+#include <algorithm>
 #include <initializer_list>
 #include <string>
 #include <string_view>
