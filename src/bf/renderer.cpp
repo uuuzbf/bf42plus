@@ -3,6 +3,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+#include <fpng.cpp>
+#include <fpng.h>
+
 uintptr_t drawDebugText_addr = 0x004611D0;
 void Renderer::drawDebugText_orig(int x, int y, const bfs::string& str) noexcept
 {
@@ -137,7 +140,18 @@ static bool writeTextureToFile(IBFStream* output, ITexture* texture, const std::
         };
 
     bool result = false;
-    if (format == "png") result = stbi_write_png_to_func(writefunc, output, width, height, channels, data, stride) > 0;
+    if (format == "png") {
+        static bool init_fpng = false;
+        if (!init_fpng) {
+            fpng::fpng_init();
+            init_fpng = true;
+        }
+        std::vector<uint8_t> outBuffer;
+        result = fpng::fpng_encode_image_to_memory(data, width, height, channels, outBuffer);
+        if (result) {
+            output->write(outBuffer.data(), outBuffer.size());
+        }
+    }
     else if (format == "jpg") result = stbi_write_jpg_to_func(writefunc, output, width, height, channels, data, 90) > 0;
 
     if (!result) {
