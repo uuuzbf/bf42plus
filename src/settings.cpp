@@ -47,6 +47,20 @@ inline void IntSetting::save(CSimpleIni& ini)
     }
 }
 
+void FloatSetting::load(const CSimpleIni& ini)
+{
+    value = ini.GetDoubleValue(section, name, value);
+}
+
+void FloatSetting::save(CSimpleIni& ini)
+{
+    if (dirty) {
+        ini.SetDoubleValue(section, name, value, comment, true);
+        dirty = false;
+    }
+}
+
+
 void ColorSetting::load(const CSimpleIni& ini)
 {
     auto colorString = ini.GetValue(section, name);
@@ -146,6 +160,7 @@ Settings::Settings()
         &fasterMapchange,
         &wrapChat,
         &screenshotFormat,
+        &hitIndicatorTime,
     };
 }
 

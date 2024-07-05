@@ -77,6 +77,39 @@ public:
     };
 };
 
+class ConsoleObjectFloatSetting : public ConsoleObject {
+protected:
+    float result;
+    float arg;
+public:
+    ConsoleObjectFloatSetting() {
+        isdynamic = true;
+        type = 1;
+        access = 1;
+        objectname = "plus";
+        minargcount = 0;
+        maxargcount = 1;
+        argdesc[0] = "float";
+        argtype[0] = -1;
+        retdesc = "float";
+        customCommands.push_back(this);
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            this->arg = atof(value.c_str());
+        }
+    };
+    virtual bfs::string getReturnValueAsString() {
+        if (hasreturnvalue) {
+            char temp[32];
+            snprintf(temp, 32, "%f", result);
+            return temp;
+        }
+        return "";
+    };
+};
+
 class ConsoleObjectEnumSetting : public ConsoleObject {
 protected:
     bfs::string param;
@@ -624,6 +657,28 @@ public:
     };
 };
 ConsoleObjectPlusScreenshotFormat commandPlusScreenshotFormat;
+
+class ConsoleObjectPlusHitIndicatorTime : public ConsoleObjectFloatSetting {
+public:
+    ConsoleObjectPlusHitIndicatorTime() : ConsoleObjectFloatSetting() {
+        functionname = "hitIndicatorTime";
+    };
+    virtual void* executeObjectMethod() {
+        if (argcount == 0) {
+            result = g_settings.hitIndicatorTime.value;
+            hasreturnvalue = true;
+            return &result;
+        }
+        else if (argcount == 1) {
+            g_settings.hitIndicatorTime.value = arg;
+            g_settings.hitIndicatorTime.dirty = true;
+            g_settings.save(false);
+            hasreturnvalue = false;
+        }
+        return 0;
+    };
+};
+ConsoleObjectPlusHitIndicatorTime commandPlusHitIndicatorTime;
 
 #ifdef _DEBUG
 class ConsoleObjectPlusCrash : public ConsoleObject {

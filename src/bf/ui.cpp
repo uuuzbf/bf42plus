@@ -598,6 +598,43 @@ void patch_optionally_disable_enemy_nametags()
     MOVE_CODE_AND_ADD_CODE(b, 0x00441AF0, 7, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+void patch_custom_hit_indicator_time()
+{
+    // Change the value BFPlayer.HitIndicationTime is set to. Original is 1.0
+    BEGIN_ASM_CODE(a)
+        // Store hitIndicationTime into eax+0x1CC
+        fld qword ptr [g_settings.hitIndicatorTime.value]
+        mov ecx, 0x8d5a7c // address of 0.0333f
+        fld dword ptr [ecx]
+        fcomip st, st(1) // compare 0.03333 and hitIndicatorTime, pop 0.03333
+        fldz // push 0.0
+        fcmovbe st, st(1) // st = st(1) if less or equal [0.0333 <= hitIndicatorTime ? st = hitIndicatorTime]
+        fstp st(1) // pop st(0), move value to st(1)
+        fstp [eax+0x1CC] // store value into BFPlayer.HitIndicationTime
+    MOVE_CODE_AND_ADD_CODE(a, 0x00495A24, 10, HOOK_DISCARD_ORIGINAL);
+
+    // Divide hit indication time before moving the value to BfMenu. Originally
+    // BFPlayer.HitIndicationTime is both used as a timer and for the alpha value of
+    // the hit indicator. 1.0 both means 1 second and fully visible. If the initial timer
+    // value is not 1, it needs to be scaled to be a correct alpha value.
+    BEGIN_ASM_CODE(b)
+        // BFPlayer.HitIndicationTime is in st(0), can be modified before it is stored to BfMenu.HitIndicationTime
+        //fdiv qword ptr [g_settings.hitIndicatorTime.value]
+        fld qword ptr [g_settings.hitIndicatorTime.value]
+        mov eax, 0x8d5a7c // address of 0.0333f
+        fld dword ptr [eax]
+        fcomip st, st(1)
+        ja set_zero // If hitIndicatorTime is < 0.0333, set BfMenu.HitIndicationTime to zero, this prevents division by zero
+        fdivp st(1), st
+        jmp end_b
+    set_zero:
+        fstp st
+        fstp st
+        fldz
+    end_b:
+    MOVE_CODE_AND_ADD_CODE(b, 0x006AEBA8, 6, HOOK_ADD_ORIGINAL_BEFORE);
+}
+
 void ui_hook_init()
 {
     addChatMessageInternal_orig = (uintptr_t)hook_function(addChatMessageInternal_orig, 5, method_to_voidptr(&BfMenu::addChatMessageInternal_hook));
@@ -618,6 +655,7 @@ void ui_hook_init()
     patch_hook_scoreboard_add_buddy_button();
     patch_optionally_disable_ui_elements();
     patch_optionally_disable_enemy_nametags();
+    patch_custom_hit_indicator_time();
 
     //trace_function_fastcall(0x006CCE20, 5, function_tracer_fastcall, "SpawnScreenStuff__setVisible");
 

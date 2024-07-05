@@ -41,6 +41,15 @@ struct IntSetting : public Setting {
     operator int() const { return value; };
 };
 
+struct FloatSetting : public Setting {
+    double value;
+    FloatSetting(const wchar_t* section, const wchar_t* name, const wchar_t* comment, int resourceid, double value) :
+        Setting(section, name, comment, resourceid), value(value) {};
+    virtual void load(const CSimpleIni& ini);
+    virtual void save(CSimpleIni& ini);
+    operator int() const { return value; };
+};
+
 struct ColorSetting : public Setting {
     uint32_t value;
     ColorSetting(const wchar_t* section, const wchar_t* name, const wchar_t* comment, int resourceid, uint32_t value) :
@@ -191,6 +200,10 @@ public:
         L"general", L"screenshotFormat",
         L"; File format for screenshots. Possible values: png jpg",
         0, "png", {"png", "jpg"} };
+    FloatSetting hitIndicatorTime = {
+        L"general", L"hitIndicatorTime",
+        L"; Sets the time it takes for the hit indicator to disappear. Default is 1 second, 0 disables the indicator.",
+        0, 1.0 };
 };
 
 extern Settings g_settings;
