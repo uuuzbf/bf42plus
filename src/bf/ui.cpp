@@ -536,6 +536,7 @@ void patch_optionally_disable_ui_elements()
     // the spawn screen when the selected spawn is lost, or after a certain timeout
     BEGIN_ASM_CODE(c)
         mov al, g_serverSettings.UI.openSpawnScreenOnDeath
+        test al,al
         jnz cont3
         mov byte ptr [ecx+0x25], 0 // ShowSpawnText = 0
         mov byte ptr [ecx+0x80], 0 // ShowLostSpawnPoint = 0
