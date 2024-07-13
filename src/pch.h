@@ -56,6 +56,7 @@
 #include "bf/ui.h"
 #include "bf/console.h"
 #include "bf/renderer.h"
+#include "bf/net.h"
 
 #include "settings.h"
 

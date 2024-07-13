@@ -3,6 +3,7 @@
 #pragma warning(disable: 4740)
 
 int g_actionsToDrop = 0;
+bool g_skipLoadingStaticObjects = false;
 
 void patch_Particle_handleUpdate_crash()
 {
@@ -574,6 +575,19 @@ void patch_CreateObjectEvent_crashes()
     MOVE_CODE_AND_ADD_CODE(b, 0x004932D2, 5, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+static void patch_Game_load_to_skip_loading_StaticObjects() {
+    // If the server requested that the StaticObjects.con file shouldn't be executed,
+    // skip loading it during Game::load. See also SpecialGameEvent handler in gameevent.cpp
+    BEGIN_ASM_CODE(a)
+        mov al, g_skipLoadingStaticObjects
+        test al,al
+        jz cont
+        mov eax, 0x004112BD
+        jmp eax
+    cont:
+    MOVE_CODE_AND_ADD_CODE(a, 0x00411170, 5, HOOK_ADD_ORIGINAL_AFTER);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -617,6 +631,7 @@ void bfhook_init()
     patch_fix_radio_playvoice_crash();
     patch_hide_broken_healthbar_if_no_kit();
     patch_CreateObjectEvent_crashes();
+    patch_Game_load_to_skip_loading_StaticObjects();
 
     dynbuffer_make_nonwritable();
 }

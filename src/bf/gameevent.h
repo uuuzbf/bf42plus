@@ -7,10 +7,14 @@ enum GameEventID {
     BF_DestroyPlayerEvent = 0x0C,
     BF_VoteEvent = 0x12,
     BF_WelcomeMsgEvent = 0x17,
+    BF_CreateStaticObjectEvent = 0x1C,
+    BF_UpdateStaticObjectEvent = 0x1D,
     BF_GameStatusEvent = 0x24,
+    BF_SpecialGameEvent = 0x27,
     BF_ChatFragmentEvent = 0x28,
     BF_ScoreMsgEvent = 0x2a,
     BF_DataBaseCompleteEvent = 0x34,
+    BF_SetLevelEvent = 0x36,
     BF_SetTeamEvent = 0x39,
     BF_RadioMessageEvent = 0x3A,
 };
@@ -57,9 +61,10 @@ class GameEvent {
     GameEvent* nextEvent;
 public:
     virtual GameEventID getType() = 0;
-    virtual ~GameEvent();
-    virtual void logInfo();
-    virtual void eventReceivedByRemote(void*);
+    virtual ~GameEvent() {};
+    static void operator delete(void* ptr);
+    virtual void logInfo(bool, int) {};
+    virtual void eventReceivedByRemote(void*) {};
     virtual bool deSerialize(BitStream*) = 0;
     virtual bool serialize(BitStream*) = 0;
 };
@@ -183,7 +188,75 @@ public:
 
 static_assert(sizeof(WelcomeMsgEvent) == 0x54);
 
+class SpecialGameEvent : GameEvent {
+public:
+    uint8_t action;
+};
+
+static_assert(sizeof(SpecialGameEvent) == 0x0D);
+
+
+class CreateStaticObjectEvent : public GameEvent {
+public:
+    virtual GameEventID getType() override { return BF_CreateStaticObjectEvent; };
+    bool deSerialize(BitStream*) override;
+    bool serialize(BitStream*) override;
+
+    uint32_t templateid;
+    uint16_t objectid;
+    bool hasPositionAndRotation;
+    bool hasScale;
+    Pos3 position;
+    Vec3 rotation;
+    Vec3 scale;
+};
+
+class UpdateStaticObjectEvent : public GameEvent {
+public:
+    virtual GameEventID getType() override { return BF_UpdateStaticObjectEvent; };
+    bool deSerialize(BitStream*) override;
+    bool serialize(BitStream*) override;
+
+    enum UpdateAction {
+        USO_MOVE = 0,
+        USO_ROTATE = 1,
+        USO_SCALE = 2,
+        USO_DELETE = 3,
+    };
+    uint16_t objectid;
+    UpdateAction action;
+    Vec3 newValue;
+};
+
 #pragma pack(pop)
+
+class GameEventMaker {
+public:
+    // Ordering is important! If overloading is used, the virtual table will be compiled
+    // in the wrong order and the game will crash when it tries to use it
+    virtual GameEvent* createEventCopy(const GameEvent& event) = 0;
+    virtual GameEvent* createEvent() = 0;
+};
+
+void* __fastcall GameEvent_allocate(size_t size);
+bool __fastcall GameEvent_registerEventMaker(GameEventID id, GameEventMaker* e);
+
+template <class T>
+class GameEventMakerMaker : public GameEventMaker {
+public:
+    virtual GameEvent* createEventCopy(const GameEvent& event) override {
+        T* e = reinterpret_cast<T*>(GameEvent_allocate(sizeof(T)));
+        memcpy(e, &event, sizeof(T));
+        debuglogt("GameEventMakerMaker::createEventCopy() -> %d\n", e->getType());
+        return e;
+    };
+    virtual GameEvent* createEvent() override {
+        T* e = reinterpret_cast<T*>(GameEvent_allocate(sizeof(T)));
+        new (e) T();
+        debuglogt("GameEventMakerMaker::createEvent() -> %d\n", e->getType());
+        return e;
+    };
+};
 
 
 void gameevent_hook_init();

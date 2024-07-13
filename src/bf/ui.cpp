@@ -1,7 +1,8 @@
 #include "../pch.h"
 
+// disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
 #pragma warning(push)
-#pragma warning(disable: 4100)
+#pragma warning(disable: 26495 4100 4410 4409 4740)
 
 __declspec(naked) BFPlayer* BfMenu::getLocalPlayer()
 {

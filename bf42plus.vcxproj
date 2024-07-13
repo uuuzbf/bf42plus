@@ -32,6 +32,10 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\bf\net.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="src\bf\object.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
@@ -71,6 +75,7 @@
     <ClInclude Include="src\bf\console.h" />
     <ClInclude Include="src\bf\generic.h" />
     <ClInclude Include="src\bf\gameevent.h" />
+    <ClInclude Include="src\bf\net.h" />
     <ClInclude Include="src\bf\object.h" />
     <ClInclude Include="src\bf\renderer.h" />
     <ClInclude Include="src\bf\stl.h" />
@@ -84,6 +89,7 @@
     <ClInclude Include="src\util.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="res\bf42plus.def" />
   </ItemGroup>
   <ItemGroup>

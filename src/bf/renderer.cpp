@@ -6,34 +6,15 @@
 #include <fpng.cpp>
 #include <fpng.h>
 
+// disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
+#pragma warning(push)
+#pragma warning(disable: 26495 4100 4410 4409 4740)
+
 uintptr_t drawDebugText_addr = 0x004611D0;
 void Renderer::drawDebugText_orig(int x, int y, const bfs::string& str) noexcept
 {
     _asm mov eax,drawDebugText_addr
     _asm jmp eax
-}
-
-void Renderer::drawDebugText(int x, int y, const bfs::string& str)
-{
-    if (font) {
-        uint32_t origColor = font->getColor();
-        font->setColor(g_settings.debugTextColor | 0xFF000000);
-
-        // adjust debug text offsets if the font isn't the default size
-        if (font->getHeight() != 11) {
-            y = y * font->getHeight() / 11;
-        }
-        if (font->getCharWidth('W') != 8) {
-            x = x * font->getCharWidth('W') / 8;
-        }
-
-        font->drawText(x, y, str);
-
-        font->setColor(origColor);
-    }
-    else {
-        drawDebugText_orig(x, y, str);
-    }
 }
 
 __declspec(naked) bool convertWorldPosToScreenPos(Vec3& output, const Vec3& input)
@@ -55,6 +36,31 @@ __declspec(naked) bool convertWorldPosToScreenPos(Vec3& output, const Vec3& inpu
         pop ebx
         pop ebp
         ret
+    }
+}
+
+#pragma warning(pop)
+
+void Renderer::drawDebugText(int x, int y, const bfs::string& str)
+{
+    if (font) {
+        uint32_t origColor = font->getColor();
+        font->setColor(g_settings.debugTextColor | 0xFF000000);
+
+        // adjust debug text offsets if the font isn't the default size
+        if (font->getHeight() != 11) {
+            y = y * font->getHeight() / 11;
+        }
+        if (font->getCharWidth('W') != 8) {
+            x = x * font->getCharWidth('W') / 8;
+        }
+
+        font->drawText(x, y, str);
+
+        font->setColor(origColor);
+    }
+    else {
+        drawDebugText_orig(x, y, str);
     }
 }
 

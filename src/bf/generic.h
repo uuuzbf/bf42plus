@@ -35,9 +35,12 @@ struct Vec2 {
     float x, y;
 };
 
+struct Quat {
+    float x, y, z, w;
+};
+
 template <class T>
 struct BaseVector3 {
-public:
     T x, y, z;
     BaseVector3() : x(0), y(0), z(0) {};
     BaseVector3(T x, T y, T z) : x(x), y(y), z(z) {};
@@ -49,7 +52,21 @@ public:
 typedef BaseVector3<float> Vec3;
 typedef BaseVector3<float> Pos3;
 
-class Mat4; // BaseMatrix4<float>
+template <class T>
+struct BaseVector4 : public BaseVector3<T> {
+    float w;
+    BaseVector4& operator= (const BaseVector3<T>& right) { this->x = right.x; this->y = right.y; this->z = right.z; w = 0; return *this; };
+};
+
+template <class T>
+struct BaseMatrix4 {
+    BaseVector4<T> a;
+    BaseVector4<T> b;
+    BaseVector4<T> c;
+    BaseVector4<T> position;
+};
+
+typedef BaseMatrix4<float> Mat4;
 
 struct PlayerInput {
     float controls[55];
@@ -132,6 +149,12 @@ public:
     uint32_t unknown;
 };
 
+enum SeekOrigin {
+    SO_BEGIN = 0,
+    SO_CURRENT = 1,
+    SO_END = 2,
+};
+
 // This is IStream in the game, but there are no namespaces here and it
 // colldides some windows stuff.
 class IBFStream : public IBase {
@@ -143,7 +166,7 @@ public:
     virtual IBFStream* clone() = 0;
     virtual bool canRead() = 0;
     virtual bool canWrite() = 0;
-    virtual bool seek(int origin, int) = 0;
+    virtual bool seek(SeekOrigin origin, int) = 0;
     virtual size_t getPosition() = 0;
     virtual size_t getSize() = 0;
 };
@@ -159,6 +182,8 @@ void __stdcall getAnsiLocale(bfs::string& out, const bfs::string& key);
 
 // Calls Locale::getWideLocale
 void __stdcall getWideLocale(bfs::wstring& out, const bfs::string& key);
+
+Mat4& __fastcall setRotation(Mat4& m, const Vec3& rotation);
 
 
 

@@ -69,6 +69,9 @@
     <ClCompile Include="src\crashreport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\bf\net.cpp">
+      <Filter>Source Files\bf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\hooks.h">
@@ -119,11 +122,15 @@
     <ClInclude Include="src\crashreport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\bf\net.h">
+      <Filter>Header Files\bf</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\bf42plus.def">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\bf42plus.rc">

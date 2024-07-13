@@ -1,5 +1,9 @@
 #include "../pch.h"
 
+// disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
+#pragma warning(push)
+#pragma warning(disable: 26495 4100 4410 4409 4740)
+
 __declspec(naked) BFPlayer* __stdcall BFPlayer::getFromID(int id)
 {
     __asm {
@@ -73,6 +77,14 @@ __declspec(naked) void __stdcall getWideLocale(bfs::wstring& out, const bfs::str
     }
 }
 
+__declspec(naked) Mat4& __fastcall setRotation(Mat4& m, const Vec3& rotation)
+{
+    _asm {
+        mov eax, 0x0040F660
+        jmp eax
+    }
+}
+
 static uintptr_t addPlayerInput_addr = 0x0040ECB0;
 __declspec(naked) void Game::addPlayerInput_orig(int playerid, PlayerInput* input) noexcept
 {
@@ -86,6 +98,8 @@ __declspec(naked) bool __stdcall getStringFromRegistry(const char* key, const ch
     _asm mov eax, getStringFromRegistry_addr
     _asm jmp eax
 }
+
+#pragma warning(pop)
 
 void Game::addPlayerInput_hook(int playerid, PlayerInput* input)
 {

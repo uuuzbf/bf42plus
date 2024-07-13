@@ -295,3 +295,10 @@ bfs::vector<IObject*>& ObjectManager_getControlPointVector();
 // This returns a map containing all registered objects
 // Move this into ObjectManager when there will be one.
 bfs::map<unsigned int, IObject*>& ObjectManager_getAllRegisteredObjects();
+
+// Move this into ObjectTemplateManager when there will be one.
+ObjectTemplate* __stdcall ObjectTemplateManager_getTemplate(uint32_t);
+
+void addStaticObject(uint16_t id, IObject* obj);
+bool removeStaticObject(uint16_t id);
+IObject* getStaticObject(uint16_t id);

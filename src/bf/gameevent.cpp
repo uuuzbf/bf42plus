@@ -3,12 +3,50 @@
 static int currentMessagePlayerID = -1;
 static int currentMessageSecondaryPlayerID = -1;
 static bool dataBaseCompleteEventReceived = false;
+static bool setLevelEventReceived = false;
+
+GameEventMakerMaker<CreateStaticObjectEvent> createStaticObjectEventMaker;
+GameEventMakerMaker<UpdateStaticObjectEvent> updateStaticObjectEventMaker;
+
+// disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
+#pragma warning(push)
+#pragma warning(disable: 26495 4100 4410 4409 4740)
+
+// __declspec(naked) GameEvent::~GameEvent()
+// {
+//     _asm mov eax, 0x004911B0
+//     _asm jmp eax
+// }
 
 static uintptr_t getNextRcvdEvent_orig = 0x004B34B0;
 __declspec(naked) GameEvent* GameEventManager::getNextRcvdEvent()
 {
     _asm mov eax,getNextRcvdEvent_orig
     _asm jmp eax
+}
+
+__declspec(naked) void* __fastcall GameEvent_allocate(size_t size)
+{
+    _asm mov eax, 0x004A6290
+    _asm jmp eax
+}
+
+__declspec(naked) void* __fastcall GameEvent_deallocate(void* ptr)
+{
+    _asm mov eax, 0x004869D0
+    _asm jmp eax
+}
+
+__declspec(naked) bool __fastcall GameEvent_registerEventMaker(GameEventID id, GameEventMaker* e)
+{
+    _asm mov eax, 0x004A7D70
+    _asm jmp eax
+}
+#pragma warning(pop)
+
+void GameEvent::operator delete(void* ptr)
+{
+    GameEvent_deallocate(ptr);
 }
 
 GameEvent* GameEventManager::getNextRcvdEvent_hook()
@@ -97,13 +135,138 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
             g_serverSettings.parseFromText(ev->message);
             break;
         }
+        case BF_CreateStaticObjectEvent: {
+            auto ev = reinterpret_cast<CreateStaticObjectEvent*>(event);
+            auto tmpl = ObjectTemplateManager_getTemplate(ev->templateid);
+            if (tmpl) {
+                auto obj = tmpl->createObject();
+                if (obj) {
+                    if (ev->hasPositionAndRotation) {
+                        // This has to be called before the rotation is set via setAbsoluteTransformation,
+                        // if both the position and the rotation is set with the matrix the object will be
+                        // invisible.
+                        obj->setAbsolutePosition(ev->position);
+
+                        Mat4 m = obj->getAbsoluteTransformation();
+                        setRotation(m, ev->rotation);
+                        //m.position = ev->position;
+                        obj->setAbsoluteTransformation(m);
+                    }
+                    obj->updateFlags(0x40000, 0);
+                    obj->init();
+                    auto& pos = obj->getAbsolutePosition();
+                    debuglogt("created static %u - %s at (%f, %f, %f)\n", ev->objectid, tmpl->getName().c_str(), pos.x, pos.y, pos.z);
+
+                    addStaticObject(ev->objectid, obj);
+                }
+                else {
+                    debuglogt("failed to create object for CreateStaticObjectEvent (%s)\n", tmpl->getName().c_str());
+                }
+            }
+            else {
+                debuglogt("received CreateStaticObjectEvent with unknown template id %u\n", ev->templateid);
+            }
+            
+            goto ignore_event;
+        }
+        case BF_UpdateStaticObjectEvent: {
+            auto ev = reinterpret_cast<UpdateStaticObjectEvent*>(event);
+            switch (ev->action) {
+                case UpdateStaticObjectEvent::USO_DELETE:{
+                    removeStaticObject(ev->objectid);
+                    break;
+                }
+                case UpdateStaticObjectEvent::USO_MOVE: {
+                    if (auto obj = getStaticObject(ev->objectid); obj) {
+                        obj->setAbsolutePosition(ev->newValue);
+                    }
+                    else debuglogt("UpdateStaticObjectEvent %s unknown id %u\n", "MOVE", ev->objectid);
+                    break;
+                }
+                case UpdateStaticObjectEvent::USO_ROTATE: {
+                    if (auto obj = getStaticObject(ev->objectid); obj) {
+                        Mat4 m = obj->getAbsoluteTransformation();
+                        setRotation(m, ev->newValue);
+                        obj->setAbsoluteTransformation(m);
+                    }
+                    else debuglogt("UpdateStaticObjectEvent %s unknown id %u\n", "ROTATE", ev->objectid);
+                    break;
+                }
+                case UpdateStaticObjectEvent::USO_SCALE: {
+                    if (auto obj = getStaticObject(ev->objectid); obj) {
+                        // not implemented
+                    }
+                    else debuglogt("UpdateStaticObjectEvent %s unknown id %u\n", "SCALE", ev->objectid);
+                    break;
+                }
+            }
+            goto ignore_event;
+        }
+        case BF_SpecialGameEvent: {
+            auto ev = reinterpret_cast<SpecialGameEvent*>(event);
+            if (!setLevelEventReceived && ev->action == 2) {
+                // If we receive a SpecialGameEvent(2) before SetLevelEvent during connecting
+                // then skip loading of the StaticObjects.con for the map.
+                g_skipLoadingStaticObjects = true;
+                debuglogt("received SpecialGameEvent(2) before SetLevelEvent, not loading StaticObjects.con\n");
+
+                goto ignore_event;
+            }
+            break;
+        }
+        case BF_SetLevelEvent: {
+            setLevelEventReceived = true;
+            break;
+        }
     }
     return event;
 
 ignore_event:
     // ignore this event, process the next one
     delete event;
+
     return getNextRcvdEvent_hook();
+}
+
+bool CreateStaticObjectEvent::deSerialize(BitStream* bs)
+{
+    debuglogt("CreateStaticObjectEvent::deSerialize()\n");
+    templateid = bs->readUnsigned(32);
+    debuglog("templateid = %u\n", templateid);
+    objectid = bs->readUnsigned(16);
+    debuglog("objectid = %u\n", objectid);
+    hasPositionAndRotation = bs->readBool();
+    debuglog("hasPositionAndRotation = %u\n", hasPositionAndRotation);
+    if (hasPositionAndRotation) {
+        position = bs->readFullVector();
+        rotation = bs->readFullVector();
+    }
+    hasScale = bs->readBool();
+    debuglog("hasScale = %u\n", hasScale);
+    if (hasScale) {
+        scale = bs->readFullVector();
+    }
+    return !bs->getAndResetError();
+}
+
+bool CreateStaticObjectEvent::serialize(BitStream* bs)
+{
+    return false; // not implemented
+}
+
+bool UpdateStaticObjectEvent::deSerialize(BitStream* bs)
+{
+    objectid = bs->readUnsigned(16);
+    action = (UpdateAction)bs->readUnsigned(2);
+    if (action != USO_DELETE) {
+        newValue = bs->readFullVector();
+    }
+    return !bs->getAndResetError();
+}
+
+bool UpdateStaticObjectEvent::serialize(BitStream* bs)
+{
+    return false; // not implemented
 }
 
 // This callback is called when the client finished
@@ -146,6 +309,13 @@ void gameevent_hook_init()
     getNextRcvdEvent_orig = (uintptr_t)hook_function(getNextRcvdEvent_orig, 6, method_to_voidptr(&GameEventManager::getNextRcvdEvent_hook));
 
     patch_GameClient_player_created_callback();
+
+    patchBytes(0x004B403F, {0x74, 0x0B}); // Fix crash if an invalid GameEvent id received
+
+    GameEvent_registerEventMaker(BF_CreateStaticObjectEvent, &createStaticObjectEventMaker);
+    GameEvent_registerEventMaker(BF_UpdateStaticObjectEvent, &updateStaticObjectEventMaker);
+
+    trace_function_fastcall(0x004A7BD0, 7, function_tracer_fastcall, "?iC:GameEvent__getEventMaker");
 }
 
 int getCurrentMessagePID()

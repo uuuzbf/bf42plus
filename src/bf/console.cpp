@@ -2,6 +2,10 @@
 
 static bfs::list<ConsoleObject*> customCommands;
 
+// disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
+#pragma warning(push)
+#pragma warning(disable: 26495 4100 4410 4409 4740)
+
 __declspec(naked) bool ConsoleObjects::registerConsoleObjects(bfs::list<ConsoleObject*>& list)
 {
     _asm mov eax, 0x005AC970
@@ -14,6 +18,7 @@ __declspec(naked) bfs::string ConsoleObject::execute(bfs::string* argv, int argc
     _asm jmp eax
 }
 
+#pragma warning(pop)
 
 class ConsoleObjectBoolSetting : public ConsoleObject {
 protected:
