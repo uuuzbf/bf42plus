@@ -71,7 +71,7 @@ namespace bfs
         wstring(wchar_t const*); // c string initializer
         wstring();
 
-        wstring(std::wstring const& str) : wstring(wstring(str.data(), str.length())) {};
+        wstring(std::wstring const& str) : wstring() { *this = wstring(str.data(), str.length()); };
 
         ~wstring();
 

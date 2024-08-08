@@ -146,7 +146,7 @@ namespace bfs {
         }
     }
 
-    const wchar_t* wstring::c_str() const
+    __declspec(naked) const wchar_t* wstring::c_str() const
     {
         __asm {
             mov eax, 0x008C3028
