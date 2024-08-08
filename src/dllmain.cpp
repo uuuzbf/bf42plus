@@ -21,6 +21,12 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 
     if (g_settings.crashDumpsToKeep > 0) deleteOldCrashDumps(g_settings.crashDumpsToKeep);
 
+    bool forceWindowMode = false;
+
+    if (strstr(lpCmdLine, " +forceWindow") != 0) {
+        forceWindowMode = true;
+    }
+
 #ifndef _DEBUG
     // Do not check for updates on map restarts
     if(strstr(lpCmdLine, " +reconnectPassword ") == 0) {
@@ -76,8 +82,12 @@ int __stdcall WinMain_hook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 #endif
     if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) {
         if (MessageBoxA(0, "Left Shift pressed\nStart in window mode?", "BF42Plus", MB_YESNO) == IDYES) {
-            nop_bytes(0x00442686, 2); // force 0 in Setup__setFullScreen
+            forceWindowMode = true;
         }
+    }
+
+    if (forceWindowMode) {
+        nop_bytes(0x00442686, 2); // force 0 in Setup__setFullScreen
     }
 
     register_custom_console_commands();
