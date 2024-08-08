@@ -251,28 +251,31 @@ bool Settings::save(bool force)
 
 ServerSettings g_serverSettings;
 
+// Parses a single parameter from a string_view pointing to "&key=value&key=value..."
+// Returns false if the string view does not contain a parameter (does not start with '&')
 static bool parseNextParameter(std::string_view& view, std::string_view& key, std::string_view& value)
 {
-    if (view.size() > 1 && view[0] == '&') {
+    if (view.starts_with("&")) {
         view.remove_prefix(1);
 
         // Find end of key
-        auto end = view.begin();
-        while (*end != '=' && *end != '&' && *end != '~') end++;
+        auto end = view.find_first_of("=&~");
+        //auto end = view.begin();
+        //while (end != view.end() && *end != '=' && *end != '&' && *end != '~') end++;
 
-        key = std::string_view(view.begin(), end);
+        key = std::string_view(view.begin(), end == std::string_view::npos ? view.end() : (view.begin() + end));
 
-        view.remove_prefix(end - view.begin());
+        view.remove_prefix(key.length());
         
         // Has value?
-        if (*end == '=') {
-            ++end;
+        if (view.starts_with("=")) {
+            view.remove_prefix(1);
             // Find end of value
-            while (*end != '&' && *end != '~') end++;
+            auto startOfNext = view.find('&');
 
-            value = std::string_view(view.begin() + 1, end);
+            value = std::string_view(view.begin(), startOfNext == std::string_view::npos ? view.end() : (view.begin() + startOfNext));
 
-            view.remove_prefix(end - view.begin());
+            view.remove_prefix(value.length());
         }
         else {
             value = std::string_view();
@@ -294,25 +297,25 @@ void ServerSettings::parseFromText(const char* text)
         // If no closing character, stop processing
         if (end == std::string::npos) break;
 
-        //std::string setting;
+        std::string_view setting(str.substr(0, end));
+
         // Setting names consist of uppercase letters and numbers [A-Z0-9]
-        auto settingStart = str.begin();
-        auto settingEnd = settingStart;
-        for (; (*settingEnd >= 'A' && *settingEnd <= 'Z') || (*settingEnd >= '0' && *settingEnd <= '9'); settingEnd++);
+        auto nameEnd = setting.begin();
+        for (; nameEnd != setting.end() && (*nameEnd >= 'A' && *nameEnd <= 'Z') || (*nameEnd >= '0' && *nameEnd <= '9'); nameEnd++);
 
-        // settingEnd should point to the first parameter separator or the setting closing character
-        if (*settingEnd != '&' && *settingEnd != '~') break;
+        // nameEnd should point to the first parameter separator or the setting closing character
+        if (nameEnd != setting.end() && *nameEnd != '&') break;
 
-        std::string_view setting(settingStart, settingEnd);
-        std::string_view params(settingEnd, str.begin() + end);
+        std::string_view settingName(setting.begin(), nameEnd);
+        std::string_view params(nameEnd, setting.end());
 
         // Max setting length is 4 for now
-        if (setting.size() > 1 && setting.size() <= 4) {
-            debuglogt("server setting: '%.*s'\n", setting.size(), setting.data());
+        if (settingName.size() > 1 && settingName.size() <= 4) {
+            debuglogt("server setting: '%.*s'\n", settingName.size(), settingName.data());
             std::string_view key, value;
             //while (parseNextParameter(params, key, value)) debuglog("  '%.*s' -> '%.*s'\n", key.size(), key.data(), value.size(), value.data());
             
-            if (setting == "3DM") {
+            if (settingName == "3DM") {
                 mine3DMap.allow = true;
                 while (parseNextParameter(params, key, value)) {
                     if (key == "D") mine3DMap.distance = strtol(value.data(), 0, 10);
@@ -320,19 +323,19 @@ void ServerSettings::parseFromText(const char* text)
                     else if (key == "T") mine3DMap.text = value;
                 }
             }
-            else if (setting == "3DS") {
+            else if (settingName == "3DS") {
                 supplyDepot3DMap.allow = true;
                 while (parseNextParameter(params, key, value)) {
                     if (key == "D") mine3DMap.distance = strtol(value.data(), 0, 10);
                 }
             }
-            else if (setting == "3DCP") {
+            else if (settingName == "3DCP") {
                 controlPoint3DMap.allow = true;
                 while (parseNextParameter(params, key, value)) {
                     if (key == "D") mine3DMap.distance = strtol(value.data(), 0, 10);
                 }
             }
-            else if (setting == "3DO") {
+            else if (settingName == "3DO") {
                 Custom3DMap c;
                 ObjectTemplate* tmpl{};
                 while (parseNextParameter(params, key, value)) {
@@ -358,7 +361,7 @@ void ServerSettings::parseFromText(const char* text)
                     debuglogt("ignoring 3DO server setting because no valid template\n");
                 }
             }
-            else if (setting == "UI") {
+            else if (settingName == "UI") {
                 while (parseNextParameter(params, key, value)) {
                     if (key == "hssdeath") UI.openSpawnScreenOnDeath = false;
                     else if (key == "hssjoin") UI.openSpawnScreenOnJoin = false;
@@ -370,6 +373,6 @@ void ServerSettings::parseFromText(const char* text)
             
         }
 
-        str.remove_prefix(end + 1);
+        str.remove_prefix(setting.length());
     }
 }
