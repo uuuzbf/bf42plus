@@ -3,6 +3,7 @@
 #include "generic.h"
 
 enum GameEventID {
+    BF_HUDTextEvent = 0x01,
     BF_CreatePlayerEvent = 0x08,
     BF_DestroyPlayerEvent = 0x0C,
     BF_VoteEvent = 0x12,
@@ -226,6 +227,26 @@ public:
     uint16_t objectid;
     UpdateAction action;
     Vec3 newValue;
+};
+
+class HUDTextEvent : public GameEvent {
+public:
+    virtual GameEventID getType() override { return BF_HUDTextEvent; };
+    bool deSerialize(BitStream*) override;
+    bool serialize(BitStream*) override;
+
+    std::wstring getTextWide() { return ISO88591ToWideString(std::string(text, length)); };
+
+    enum TextType {
+        HTT_CENTERTOP2 = 0,
+        HTT_CENTERTOP3 = 1,
+        HTT_DEATHMESSAGE = 2,
+        HTT_CENTERYELLOW = 3,
+    };
+    const int TextTypeBits = 3;
+    TextType type;
+    size_t length;
+    char text[128];
 };
 
 #pragma pack(pop)

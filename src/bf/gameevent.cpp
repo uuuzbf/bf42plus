@@ -7,6 +7,7 @@ static bool setLevelEventReceived = false;
 
 GameEventMakerMaker<CreateStaticObjectEvent> createStaticObjectEventMaker;
 GameEventMakerMaker<UpdateStaticObjectEvent> updateStaticObjectEventMaker;
+GameEventMakerMaker<HUDTextEvent> hudTextEventMaker;
 
 // disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
 #pragma warning(push)
@@ -218,6 +219,42 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
             setLevelEventReceived = true;
             break;
         }
+        case BF_HUDTextEvent: {
+            auto ev = reinterpret_cast<HUDTextEvent*>(event);
+            switch (ev->type) {
+                case HUDTextEvent::HTT_CENTERTOP2:
+                    if (ev->length > 0) {
+                        SpawnScreen_setSpawnMessage(ev->getTextWide());
+                        forceSpawnTextToShow(true);
+                    }
+                    else {
+                        forceSpawnTextToShow(false);
+                    }
+                    break;
+                case HUDTextEvent::HTT_CENTERTOP3:
+                    if (ev->length > 0) {
+                        BfMenu::getSingleton()->setStatusMessage(ev->getTextWide());
+                    }
+                    else {
+                        BfMenu::getSingleton()->clearStatusMessage();
+                    }
+                    break;
+                case HUDTextEvent::HTT_CENTERYELLOW:
+                    if (ev->length > 0){
+                        BfMenu::getSingleton()->showDisconnectMessage(ev->getTextWide());
+                        forceDisconnectMessageToShow(true);
+                    }
+                    else {
+                        BfMenu::getSingleton()->hideDisconnectMessage();
+                        forceDisconnectMessageToShow(false);
+                    }
+                    break;
+                case HUDTextEvent::HTT_DEATHMESSAGE:
+                    BfMenu::getSingleton()->setCenterKillMessage(ev->getTextWide());
+                    break;
+            }
+            break;
+        }
     }
     return event;
 
@@ -251,7 +288,7 @@ bool CreateStaticObjectEvent::deSerialize(BitStream* bs)
 
 bool CreateStaticObjectEvent::serialize(BitStream* bs)
 {
-    return false; // not implemented
+    (void)bs; return false; // not implemented
 }
 
 bool UpdateStaticObjectEvent::deSerialize(BitStream* bs)
@@ -266,8 +303,22 @@ bool UpdateStaticObjectEvent::deSerialize(BitStream* bs)
 
 bool UpdateStaticObjectEvent::serialize(BitStream* bs)
 {
-    return false; // not implemented
+    (void)bs; return false; // not implemented
 }
+
+bool HUDTextEvent::deSerialize(BitStream* bs)
+{
+    type = (TextType)bs->readUnsigned(TextTypeBits);
+    length = bs->readUnsigned(7);
+    bs->readBits(text, length * 8);
+    return !bs->getAndResetError();
+}
+
+bool HUDTextEvent::serialize(BitStream* bs)
+{
+    (void)bs; return false; // not implemented
+}
+
 
 // This callback is called when the client finished
 // processing a CreatePlayerEvent from the server.
@@ -314,6 +365,7 @@ void gameevent_hook_init()
 
     GameEvent_registerEventMaker(BF_CreateStaticObjectEvent, &createStaticObjectEventMaker);
     GameEvent_registerEventMaker(BF_UpdateStaticObjectEvent, &updateStaticObjectEventMaker);
+    GameEvent_registerEventMaker(BF_HUDTextEvent, &hudTextEventMaker);
 
     trace_function_fastcall(0x004A7BD0, 7, function_tracer_fastcall, "?iC:GameEvent__getEventMaker");
 }
