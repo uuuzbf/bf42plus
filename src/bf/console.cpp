@@ -726,6 +726,81 @@ public:
 ConsoleObjectPlusCrash commandPlusCrash;
 #endif
 
+class ConsoleObjectPlusPoke : public ConsoleObject {
+    int param1;
+    bfs::string param2;
+public:
+    ConsoleObjectPlusPoke() {
+        isdynamic = true;
+        type = 0;
+        access = 1;
+        objectname = "plus";
+        functionname = "poke";
+        minargcount = 2;
+        maxargcount = 2;
+        argdesc[0] = "int";
+        argtype[0] = -1;
+        argdesc[1] = "std::string";
+        argtype[1] = -1;
+        retdesc = "void";
+        customCommands.push_back(this);
+    };
+    virtual void setArgFromString(int arg, bfs::string const& value) {
+        if (arg == 1) {
+            param1 = atoi(value.c_str());
+        }
+        else if (arg == 2) {
+            param2 = value;
+        }
+    };
+    virtual bool isObjectActive() const { return true; };
+    virtual void* executeObjectMethod() {
+        if (argcount == 2) {
+            bfs::wstring wparam2 = ISO88591ToWideString(param2);
+            char temp[64];
+            snprintf(temp, 64, "%i -> '%s' - '%ls'", param1, param2.c_str(), wparam2.c_str());
+            BfMenu::getSingleton()->outputConsole(temp);
+            if (param1 == 1) {
+                BfMenu::getSingleton()->setInfoMessage(param2);
+            }
+            else if (param1 == 2) { // spawn point selected, spawn point not selected select one
+                if (param2.length > 0) {
+                    SpawnScreen_setSpawnMessage(wparam2);
+                    forceSpawnTextToShow(true);
+                }
+                else {
+                    forceSpawnTextToShow(false);
+                }
+            }
+            else if (param1 == 3) { // game is restarting, min number of players
+                if (param2.length > 0) {
+                    BfMenu::getSingleton()->setStatusMessage(wparam2);
+                }
+                else {
+                    BfMenu::getSingleton()->clearStatusMessage();
+                }
+            }
+            else if (param1 == 4) {
+                BfMenu::getSingleton()->setCenterKillMessage(wparam2);
+                //BfMenu::getSingleton()->setCenterKillMessage(L"baaaaaa ba ba ba");
+            }
+            else if (param1 == 5) { // Warning! Connection problems detected!, chat flood, OVERRIDES setStatusMessage if visible
+                if (param2.length > 0) {
+                    BfMenu::getSingleton()->showDisconnectMessage(wparam2);
+                    forceDisconnectMessageToShow(true);
+                }
+                else {
+                    BfMenu::getSingleton()->hideDisconnectMessage();
+                    forceDisconnectMessageToShow(false);
+                }
+            }
+        }
+        hasreturnvalue = false;
+        return 0;
+    };
+};
+ConsoleObjectPlusPoke commandPlusPoke;
+
 void register_custom_console_commands()
 {
     commandPlusScreenshotFormat.updatePossibleValues(g_settings.screenshotFormat.getPossibleValues());

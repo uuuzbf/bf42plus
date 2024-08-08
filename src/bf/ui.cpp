@@ -1,5 +1,8 @@
 #include "../pch.h"
 
+bool spawnTextForced = false;
+bool disconnectMessageForced = false;
+
 // disable warnings about unreferenced parameters, uninitialized object variables, __asm blocks, ...
 #pragma warning(push)
 #pragma warning(disable: 26495 4100 4410 4409 4740)
@@ -106,6 +109,33 @@ __declspec(naked) void BfMenu::removeFromIgnoreList_orig(int playerid) noexcept
 {
     _asm mov eax, removeFromIgnoreList_addr
     _asm jmp eax
+}
+
+__declspec(naked) void BfMenu::setStatusMessage(bfs::wstring message) noexcept
+{
+    _asm mov eax, 0x006A7D80
+    _asm jmp eax
+}
+
+__declspec(naked) bool BfMenu::clearStatusMessage() noexcept
+{
+    _asm mov eax, 0x006A7DD0
+    _asm jmp eax
+}
+
+__declspec(naked) void __stdcall SpawnScreen_setSpawnMessage(const bfs::wstring message) noexcept
+{
+    _asm {
+        mov ecx, 0x00A5F1A8
+        mov ecx, [ecx]
+        mov ecx, [ecx+0x30]
+        mov eax, [esp+4+0x14] // message.length
+        test eax,eax
+        setnz al
+        mov byte ptr [ecx+0x25], al
+        mov eax, 0x006CCBC0
+        jmp eax
+    }
 }
 
 #pragma warning(pop)
@@ -539,7 +569,8 @@ void patch_optionally_disable_ui_elements()
         mov al, g_serverSettings.UI.openSpawnScreenOnDeath
         test al,al
         jnz cont3
-        mov byte ptr [ecx+0x25], 0 // ShowSpawnText = 0
+        mov al, spawnTextForced
+        mov byte ptr [ecx+0x25], al // ShowSpawnText
         mov byte ptr [ecx+0x80], 0 // ShowLostSpawnPoint = 0
         retn 8
     cont3:
@@ -637,6 +668,34 @@ void patch_custom_hit_indicator_time()
     MOVE_CODE_AND_ADD_CODE(b, 0x006AEBA8, 6, HOOK_ADD_ORIGINAL_BEFORE);
 }
 
+void forceSpawnTextToShow(bool force)
+{
+    spawnTextForced = force;
+}
+
+void forceDisconnectMessageToShow(bool force)
+{
+    disconnectMessageForced = force;
+}
+
+void patch_force_texts_to_show()
+{
+    BEGIN_ASM_CODE(a)
+        mov eax, [edx+0x30]
+        mov cl, spawnTextForced
+        mov byte ptr [eax+0x25], cl
+    MOVE_CODE_AND_ADD_CODE(a, 0x006ADF69, 7, HOOK_DISCARD_ORIGINAL);
+
+    BEGIN_ASM_CODE(b)
+        mov al, disconnectMessageForced
+        test al,al
+        jnz cont
+        mov eax, 0x006A7EE0
+        call eax
+    cont:
+    MOVE_CODE_AND_ADD_CODE(b, 0x00495FD2, 5, HOOK_DISCARD_ORIGINAL);
+}
+
 void ui_hook_init()
 {
     addChatMessageInternal_orig = (uintptr_t)hook_function(addChatMessageInternal_orig, 5, method_to_voidptr(&BfMenu::addChatMessageInternal_hook));
@@ -658,6 +717,7 @@ void ui_hook_init()
     patch_optionally_disable_ui_elements();
     patch_optionally_disable_enemy_nametags();
     patch_custom_hit_indicator_time();
+    patch_force_texts_to_show();
 
     //trace_function_fastcall(0x006CCE20, 5, function_tracer_fastcall, "SpawnScreenStuff__setVisible");
 

@@ -70,11 +70,18 @@ public:
     void addToIgnoreList(int playerid);
     void removeFromIgnoreList_orig(int playerid) noexcept;
     void removeFromIgnoreList(int playerid);
+    void setStatusMessage(bfs::wstring message) noexcept;
+    bool clearStatusMessage() noexcept;
 };
 
 // Set a buddy's color. The player already has to be on the game's buddy list.
 // Set color to InvalidColor to remove/set to default.
 void setBuddyColor(std::string name, uint32_t color, bool save);
 void chatMessage(std::string message, bool status = false, int team = 0);
+
+void __stdcall SpawnScreen_setSpawnMessage(const bfs::wstring message) noexcept;
+
+void forceSpawnTextToShow(bool force);
+void forceDisconnectMessageToShow(bool force);
 
 void ui_hook_init();
