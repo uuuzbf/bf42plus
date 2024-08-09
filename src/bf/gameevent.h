@@ -237,16 +237,16 @@ public:
 
     std::wstring getTextWide() { return ISO88591ToWideString(std::string(text, length)); };
 
-    enum TextType {
+    enum HUDTextType {
         HTT_CENTERTOP2 = 0,
         HTT_CENTERTOP3 = 1,
         HTT_DEATHMESSAGE = 2,
         HTT_CENTERYELLOW = 3,
     };
-    const int TextTypeBits = 3;
-    TextType type;
+    enum { TextTypeBits = 3 };
+    HUDTextType type;
     size_t length;
-    char text[128];
+    char text[128]; // not null-terminated!
 };
 
 #pragma pack(pop)

@@ -301,7 +301,7 @@ void ServerSettings::parseFromText(const char* text)
 
         // Setting names consist of uppercase letters and numbers [A-Z0-9]
         auto nameEnd = setting.begin();
-        for (; nameEnd != setting.end() && (*nameEnd >= 'A' && *nameEnd <= 'Z') || (*nameEnd >= '0' && *nameEnd <= '9'); nameEnd++);
+        for (; nameEnd != setting.end() && ((*nameEnd >= 'A' && *nameEnd <= 'Z') || (*nameEnd >= '0' && *nameEnd <= '9')); nameEnd++);
 
         // nameEnd should point to the first parameter separator or the setting closing character
         if (nameEnd != setting.end() && *nameEnd != '&') break;

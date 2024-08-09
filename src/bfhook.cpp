@@ -588,6 +588,26 @@ static void patch_Game_load_to_skip_loading_StaticObjects() {
     MOVE_CODE_AND_ADD_CODE(a, 0x00411170, 5, HOOK_ADD_ORIGINAL_AFTER);
 }
 
+static void patch_add_debug_for_network_errors() {
+    // Modify call to GameEvent::deSerialize(), add a log message if it fails
+    static const char* msgDeserializeFailed = "GameEvent::deSerialize() failed for event %d\n";
+    BEGIN_ASM_CODE(a)
+        mov edi, edx
+        call [edx+4] // vtbl->deSerialize()
+        test eax,eax
+        jnz cont
+        call [edi] // vtbl->getType(), this will be null but those methods don't use it
+        push eax
+        push msgDeserializeFailed
+        mov eax,debuglogt
+        call eax
+        add esp, 8
+        xor eax,eax
+    cont:
+        mov edi,eax
+    MOVE_CODE_AND_ADD_CODE(a, 0x004B4045, 5, HOOK_DISCARD_ORIGINAL);
+}
+
 void bfhook_init()
 {
     init_hooksystem(NULL);
@@ -632,6 +652,8 @@ void bfhook_init()
     patch_hide_broken_healthbar_if_no_kit();
     patch_CreateObjectEvent_crashes();
     patch_Game_load_to_skip_loading_StaticObjects();
+
+    patch_add_debug_for_network_errors();
 
     dynbuffer_make_nonwritable();
 }

@@ -228,6 +228,7 @@ GameEvent* GameEventManager::getNextRcvdEvent_hook()
                         forceSpawnTextToShow(true);
                     }
                     else {
+                        SpawnScreen_setSpawnMessage(L"");
                         forceSpawnTextToShow(false);
                     }
                     break;
@@ -308,7 +309,7 @@ bool UpdateStaticObjectEvent::serialize(BitStream* bs)
 
 bool HUDTextEvent::deSerialize(BitStream* bs)
 {
-    type = (TextType)bs->readUnsigned(TextTypeBits);
+    type = (HUDTextType)bs->readUnsigned(TextTypeBits);
     length = bs->readUnsigned(7);
     bs->readBits(text, length * 8);
     return !bs->getAndResetError();
